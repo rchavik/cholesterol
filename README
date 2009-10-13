@@ -1,0 +1,77 @@
+Cholesterol Plugin Version 0.1
+------------------------------
+
+This plugin currently only contains jqGrid components and helper.
+
+Requirement
+-----------
+
+jQuery + UI (tested on 1.7.2) - http://jquery.com/
+jqGrid (tested on version 3.5.3) - http://www.trirand.com/blog/?page_id=6
+
+Tested with cakephp 1.3. May work with 1.2.5.
+
+Listed below is an example to use this plugin.
+
+<?php
+
+class UsersController extends AppController {
+	// add Jqgrid component and helpers in your class variables.
+	var $components = array('Cholesterol.Jqgrid');
+	var $helpers = array('Cholesterol.Jqgrid');
+
+	// controllers/users_controller.php - action that displays the grid
+	function list_users() {
+	}
+
+	// Retrieve data for the grid in Json format
+	function get_list_users() {
+		// This plugin assumes data is transferred in JSON format
+		$this->view = 'Cholesterol.Json'; 
+		// Perform the actual query using JqgridComponent. 
+		// The parameters mimics AppModel->find()
+		$this->Jqgrid->find(
+			'User',                            // Model name 
+			array(),                           // $conditions
+			array('User.id', 'User.username'), // $fields
+			null,                              // $order
+			0                                  // recursive
+		);
+	}
+?>
+
+<?php
+// views/users/list_users
+echo $jqgrid->grid('grid_user');
+
+// Minimal configuration required to setup jqgrid initialization 
+// The format of $options array follows jqgrid configuration 
+// NOTE: javascript blocks (eg: for event handling) needs to be enclosed
+// with <script> and </script>
+echo $jqgrid->script('grid_user', array(
+	'caption' => 'Users',
+	'url' => '/users/get_list_users',
+	'colModel' => array(
+		array(
+			'name' => 'User.id',
+			'index' => 'User.id',
+			),
+		array(
+			'name' => 'User.username',
+			'index' => 'User.username',
+			),
+		),
+	'loadComplete' => '
+<script>
+function() {
+        alert("Your grid has been loaded successfully");
+}
+</script>
+'
+	)
+);
+
+?>
+
+Good luck
+-- rchavik
