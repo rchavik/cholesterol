@@ -23,6 +23,25 @@ class JqgridComponent extends Object {
 		return $res;
 	}
 
+	function _mergeSearchConditions(&$conditions, $needFields) {
+		$ignoreList = array('ext', 'url', '_search', 'nd', 'page', 'rows', 'sidx', 'sord');
+
+		$url = $this->controller->params['url'];
+		//debug($this->controller->params['url']);
+		foreach ($url as $key => $val) {
+			if (in_array($key, $ignoreList))  {
+				continue;
+			}
+
+			// XXX: convert back _ to . when appropriate
+			// TODO: check against $needFields
+			if (strstr($key, '_')) {
+				$newkey = preg_replace('/_/', '.', $key, 1);
+			}
+			$conditions['conditions'][$newkey] = $val;
+		}
+	}
+
 	function find($modelName, $conditions = array(), $fields = array(), $order = null, $recursive = -1) {
 
 		$controller =& $this->controller;
@@ -33,6 +52,7 @@ class JqgridComponent extends Object {
 		$rows = array_key_value('rows', $url);
 		$sidx = array_key_value('sidx', $url);
 		$sord = array_key_value('sord', $url);
+		$_search = array_key_value('_search', $url);
 
 		$limit = $rows == 0 ? 10 : $rows;
 		$start = $limit * $page - $limit;
@@ -53,6 +73,19 @@ class JqgridComponent extends Object {
 
 		$model = ClassRegistry::init($modelName);
 		$model->recursive = $recursive;
+
+		if (!empty($fields)) {
+			// user has specified wanted fields, so use it.
+			$needFields = $this->_extractFields($fields);
+		} else {
+			// fallback using model schema fields
+			$needFields = array($modelName => array_keys($model->_schema));
+		}
+
+		if ($_search == 'true') {
+			$this->_mergeSearchConditions($conditions, $needFields);
+		}
+
 		$count = $model->find('count', $conditions);
 
 		$findOptions = array_merge($conditions, array(
@@ -72,14 +105,6 @@ class JqgridComponent extends Object {
 
 		for ($i = 0; !empty($rows) && $i < count($rows); $i++) {
 			$row =& $rows[$i];
-
-			if (!empty($fields)) {
-				// user has specified wanted fields, so use it.
-				$needFields = $this->_extractFields($fields);
-			} else {
-				// fallback using model schema fields
-				$needFields = array($modelName => array_keys($model->_schema));
-			}
 
 			foreach ($needFields as $gridModel => $gridFields) {
 

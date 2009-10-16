@@ -14,7 +14,7 @@ Tested with cakephp 1.3. May work with 1.2.5.
 Listed below is an example to use this plugin.
 
 <?php
-
+// controllers/users_controller.php
 class UsersController extends AppController {
 	// add Jqgrid component and helpers in your class variables.
 	var $components = array('Cholesterol.Jqgrid');
@@ -41,22 +41,25 @@ class UsersController extends AppController {
 ?>
 
 <?php
-// views/users/list_users
+// views/users/list_users.ctp
 echo $jqgrid->grid('grid_user');
 
 // Minimal configuration required to setup jqgrid initialization 
 // The format of $options array follows jqgrid configuration 
 // NOTE: javascript blocks (eg: for event handling) needs to be enclosed
 // with <script> and </script>
+// If anyone has better solution for this, please let me know
 echo $jqgrid->script('grid_user', array(
 	'caption' => 'Users',
-	'url' => '/users/get_list_users',
+	'url' => '/users/get_list_users.json',
 	'colModel' => array(
 		array(
+			'label' => 'ID',
 			'name' => 'User.id',
 			'index' => 'User.id',
 			),
 		array(
+			'label' => 'Username',
 			'name' => 'User.username',
 			'index' => 'User.username',
 			),
@@ -73,5 +76,5 @@ function() {
 
 ?>
 
-Good luck
+Good luck and have fun.
 -- rchavik
