@@ -78,6 +78,7 @@ class JqgridHelper extends AppHelper {
 		$buffer = json_encode($gridOptions);
 		$buffer = str_replace('\r\n', '', $buffer);
 		$buffer = str_replace('\n', '', $buffer);
+		$buffer = str_replace('\r', '', $buffer);
 		$buffer = str_replace('\t', '', $buffer);
 		$buffer = str_replace('\"', '"', $buffer);
 		$buffer = str_replace('"<script>', '', $buffer);
@@ -87,6 +88,7 @@ class JqgridHelper extends AppHelper {
 		$buffer = json_encode($navGridOptions);
 		$buffer = str_replace('\r\n', '', $buffer);
 		$buffer = str_replace('\n', '', $buffer);
+		$buffer = str_replace('\r', '', $buffer);
 		$buffer = str_replace('\t', '', $buffer);
 		$buffer = str_replace('\"', '"', $buffer);
 		$buffer = str_replace('"<script>', '', $buffer);
