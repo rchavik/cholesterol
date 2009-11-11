@@ -37,7 +37,7 @@ class JqgridComponent extends Object {
 			if (strstr($key, '_')) {
 				$newkey = preg_replace('/_/', '.', $key, 1);
 			}
-			$conditions['conditions'][$newkey] = $val;
+			$conditions[$newkey . ' like'] = $val . '%';
 		}
 	}
 
@@ -137,7 +137,7 @@ class JqgridComponent extends Object {
 			$this->controller->autoRender = false;
 		}
 
-		$findOptions = array_merge($conditions, array(
+		$findOptions = array_merge(array('conditions' => $conditions), array(
 			'page' => $page,
 			'limit' => $limit,
 			'order' => $field_order
