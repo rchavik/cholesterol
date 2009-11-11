@@ -42,6 +42,25 @@ class JqgridComponent extends Object {
 		}
 	}
 
+	function exportToExcel($fields, $rows, $filename = 'report.csv') {
+		$download_filename = $filename;
+		header('Content-Type: application/vnd.ms-excel');
+		header('Content-Disposition: attachment; filename='. urlencode($download_filename));
+		header("Content-Transfer-Encoding: binary\n");
+
+		$rowLen = count($rows);
+		$fieldLen = count($fields);
+
+		for ($i = 0; $i < $rowLen; $i++) {
+			$row = $rows[$i];
+			for ($j = 0; $j < $fieldLen; $j++) {
+				$dict = explode('.', $fields[$j]);
+				echo $row[$dict[0]][$dict[1]] . ',';
+			}
+			echo "\r\n";
+		}
+	}
+
 	function find($modelName, $conditions = array(), $fields = array(), $order = null, $recursive = -1) {
 
 		$controller =& $this->controller;
@@ -53,6 +72,7 @@ class JqgridComponent extends Object {
 		$sidx = array_key_value('sidx', $url);
 		$sord = array_key_value('sord', $url);
 		$_search = array_key_value('_search', $url);
+		$exportToExcel = array_key_value('exportToExcel', $url);
 
 		$limit = $rows == 0 ? 10 : $rows;
 		$start = $limit * $page - $limit;
@@ -88,6 +108,12 @@ class JqgridComponent extends Object {
 
 		$count = $model->find('count', $conditions);
 
+		if (strcmp($exportToExcel, 'true') == 0) {
+			$page = 1;
+			$limit = 65535;
+			$this->controller->autoRender = false;
+		}
+
 		$findOptions = array_merge($conditions, array(
 			'page' => $page,
 			'limit' => $limit,
@@ -96,6 +122,10 @@ class JqgridComponent extends Object {
 		);
 
 		$rows = $model->find('all', $findOptions);
+
+		if (strcmp($exportToExcel, 'true') == 0) {
+			return $this->exportToExcel($fields, $rows);
+		}
 		
 		$total_pages = $count > 0 ? ceil($count/$limit) : 0;
 

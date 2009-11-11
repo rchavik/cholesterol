@@ -14,7 +14,8 @@ class JqgridHelper extends AppHelper {
 		$options = array_merge(array(
 			'class' => false,
 			'pager' => false,
-			'pagerClass' => false
+			'pagerClass' => false,
+			'exportToExcel' => false,
 			), $options);
 
 		$tableClass = $pager = '';
@@ -33,7 +34,31 @@ class JqgridHelper extends AppHelper {
 			}
 		}
 
-		return '<table id=\'' . $id . '\'' . $tableClass . '></table>' . $pager;
+		if ($options['exportToExcel'] == true) {
+			$iframe_id = 'export_excel_' . $id;
+			$iframe =<<<EOF
+<style>
+.export-excel-form input {
+	visibility: hidden;
+	display: none;
+}
+</style>
+<iframe id=$iframe_id style="visibility: hidden; display: none;"></iframe>
+<form id=form_download_{$id} class=export-excel-form target="{$iframe_id}">
+	<input id=_search name=_search />
+	<input id=nd name=nd />
+	<input id=page name=page />
+	<input id=rows name=rows />
+	<input id=sidx name=sidx />
+	<input id=sord name=sord />
+	<input id=exportToExcel name=exportToExcel />
+</form>
+EOF;
+		} else {
+			$iframe = '';
+		}
+
+		return $iframe . '<table id=\'' . $id . '\'' . $tableClass . '></table>' . $pager;
 	}
 
 	/** Generate javascript block for jqGrid 
@@ -45,7 +70,8 @@ class JqgridHelper extends AppHelper {
 	function script($id, $gridOptions = array(), $navGridOptions = array(), $options = array()) {
 
 		$options = array_merge(array(
-			'filterToolbar' => true
+			'filterToolbar' => true,
+			'exportToExcel' => false,
 			), $options
 		);
 
@@ -107,6 +133,35 @@ var grid = $('#{$id}').jqGrid($jsonOptions);
 EOF;
 		}
 
+		if ($options['exportToExcel']) {
+			$code .=<<<EOF
+grid.navButtonAdd('#$gridOptions[pager]',{
+	caption: '',
+	buttonicon: 'ui-icon-disk',
+	onClickButton: function() {
+		var url = grid.getGridParam('url')
+		var post = grid.getPostData();
+		var param = [];
+		var iframe = $('#export_excel_{$id}');
+		var form = $('#form_download_{$id}');
+		post.exportToExcel = true;
+
+		for (p in post) { 
+			var item = p + '=' + post[p]; 
+			$('#' + p).val(post[p]);
+			param.push(item) 
+		}
+
+		var action = url + '?' + param.join('&');
+
+		form.attr('action', action).submit();
+
+		delete post.exportToExcel;
+	}, 
+	position: 'last'
+});
+EOF;
+		}
 		if ($options['filterToolbar']) {
 			$code .=<<<EOF
 grid.filterToolbar();
