@@ -30,12 +30,13 @@ class UsersController extends AppController {
 		$this->view = 'Cholesterol.Json'; 
 		// Perform the actual query using JqgridComponent. 
 		// The parameters mimics AppModel->find()
-		$this->Jqgrid->find(
-			'User',                            // Model name 
-			array(),                           // $conditions
-			array('User.id', 'User.username'), // $fields
-			null,                              // $order
-			0                                  // recursive
+		$this->Jqgrid->find('User', array(
+			'conditions' => array(),
+			'fields' => array('User.id', 'User.username'),
+			'order' => null,
+			'recursive' => 0,
+			'export_filename' => 'export.csv' // when exportToExcel is true
+			)
 		);
 	}
 ?>
@@ -64,6 +65,7 @@ echo $jqgrid->script('grid_user', array(
 			'index' => 'User.username',
 			),
 		),
+	'exportToExcel' => true, // add a button to save grid into a CSV file
 	'loadComplete' => '
 <script>
 function() {

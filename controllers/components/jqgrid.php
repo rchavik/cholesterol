@@ -27,7 +27,6 @@ class JqgridComponent extends Object {
 		$ignoreList = array('ext', 'url', '_search', 'nd', 'page', 'rows', 'sidx', 'sord');
 
 		$url = $this->controller->params['url'];
-		//debug($this->controller->params['url']);
 		foreach ($url as $key => $val) {
 			if (in_array($key, $ignoreList))  {
 				continue;
@@ -42,7 +41,14 @@ class JqgridComponent extends Object {
 		}
 	}
 
-	function exportToExcel($fields, $rows, $filename = 'report.csv') {
+	/** Export grid data to excel (CSV) */
+	function exportToExcel($rows, $options = array()) {
+		$options += array(
+			'fields' => array(),
+			'export_headers' => array(),
+			'filename' => 'report.csv'
+			);
+		extract($options);
 		$download_filename = $filename;
 		header('Content-Type: application/vnd.ms-excel');
 		header('Content-Disposition: attachment; filename='. urlencode($download_filename));
@@ -50,11 +56,28 @@ class JqgridComponent extends Object {
 
 		$rowLen = count($rows);
 		$fieldLen = count($fields);
+		$hasHeaders = false;
+
+		if (array_key_exists('export_headers', $options) && !empty($options['export_headers'])) {
+			$hasHeaders = true;
+		}
+
+		// construct list of column headers and display it accordingly
+		for ($i = 0; $i < $fieldLen; $i++) {
+			$dict = explode('.', $fields[$i]);
+			$fieldList[] = $dict;
+			if ($hasHeaders) {
+				echo $options['export_headers'][$i] . ',';
+			} else {
+				echo $dict[1] . ',';
+			}
+		}
+		echo "\r\n";
 
 		for ($i = 0; $i < $rowLen; $i++) {
 			$row = $rows[$i];
 			for ($j = 0; $j < $fieldLen; $j++) {
-				$dict = explode('.', $fields[$j]);
+				$dict =& $fieldList[$j];
 				echo $row[$dict[0]][$dict[1]] . ',';
 			}
 			echo "\r\n";
@@ -62,6 +85,10 @@ class JqgridComponent extends Object {
 	}
 
 	function find($modelName, $conditions = array(), $fields = array(), $order = null, $recursive = -1) {
+
+		if (is_array($conditions) && array_key_exists('conditions', $conditions)) {
+			extract($conditions);
+		}
 
 		$controller =& $this->controller;
 		$url = $controller->params['url'];
@@ -85,10 +112,6 @@ class JqgridComponent extends Object {
 			}
 		} else {
 			$field_order = $order;
-		}
-
-		if (!array_key_exists('conditions', $conditions)) {
-			$conditions = array('conditions' => $conditions);
 		}
 
 		$model = ClassRegistry::init($modelName);
@@ -124,7 +147,11 @@ class JqgridComponent extends Object {
 		$rows = $model->find('all', $findOptions);
 
 		if (strcmp($exportToExcel, 'true') == 0) {
-			return $this->exportToExcel($fields, $rows);
+			return $this->exportToExcel($rows, array(
+				'fields' => $fields,
+				'export_headers' => $export_headers,
+				'filename' => $export_filename
+			));
 		}
 		
 		$total_pages = $count > 0 ? ceil($count/$limit) : 0;
