@@ -23,8 +23,8 @@ class JqgridComponent extends Object {
 		return $res;
 	}
 
-	function _mergeFilterConditions(&$conditions, $needFields) {
-		$ignoreList = array('ext', 'url', '_search', 'nd', 'page', 'rows', 'sidx', 'sord');
+	function _mergeFilterConditions(&$conditions, $needFields, $filterMode) {
+		$ignoreList = array('ext', 'url', '_search', 'nd', 'page', 'rows', 'sidx', 'sord', 'exportToExcel');
 
 		$url = $this->controller->params['url'];
 		foreach ($url as $key => $val) {
@@ -38,37 +38,41 @@ class JqgridComponent extends Object {
 			if (strstr($key, '_')) {
 				$newkey = preg_replace('/_/', '.', $key, 1);
 			}
-			$conditions[$newkey . ' like'] = $val . '%';
+
+			switch ($filterMode) {
+			case 'exact': 
+				$conditions[$newkey] = $val; 
+				break;
+			default:
+				$conditions[$newkey . ' like'] = $val . '%';
+				break;
+			}
 		}
 	}
 
-	/** Export grid data to excel (CSV) */
-	function exportToExcel($rows, $options = array()) {
-		$options += array(
-			'fields' => array(),
+	/** Export grid data to CSV */
+	function _exportToCSV($fields, $rows, $exportOptions = array()) {
+		$exportOptions += array(
+			'headers' => array(),
 			'export_headers' => array(),
-			'filename' => 'report.csv'
+			'export_filename' => 'report.csv'
 			);
-		extract($options);
-		$download_filename = $filename;
+		extract($exportOptions);
+		$download_filename = $export_filename;
 		header('Content-Type: application/vnd.ms-excel');
 		header('Content-Disposition: attachment; filename='. urlencode($download_filename));
 		header("Content-Transfer-Encoding: binary\n");
 
 		$rowLen = count($rows);
 		$fieldLen = count($fields);
-		$hasHeaders = false;
-
-		if (array_key_exists('export_headers', $options) && !empty($options['export_headers'])) {
-			$hasHeaders = true;
-		}
+		$hasHeaders = !empty($export_headers);
 
 		// construct list of column headers and display it accordingly
 		for ($i = 0; $i < $fieldLen; $i++) {
 			$dict = explode('.', $fields[$i]);
 			$fieldList[] = $dict;
 			if ($hasHeaders) {
-				echo $options['export_headers'][$i] . ',';
+				echo $export_headers[$i] . ',';
 			} else {
 				echo $dict[1] . ',';
 			}
@@ -83,37 +87,60 @@ class JqgridComponent extends Object {
 			}
 			echo "\r\n";
 		}
+		Configure::write('debug', 0);
 	}
 
-	function find($modelName, $conditions = array(), $fields = array(), $order = null, $recursive = -1) {
-
-		if (is_array($conditions) && array_key_exists('conditions', $conditions)) {
-			extract($conditions);
+	function _exportToFile($fields, $rows, $exportOptions) {
+		switch ($exportOptions['type']) {
+		case 'csv':
+			return $this->_exportToCSV($fields, $rows, $exportOptions); 
+			break;
+		default:
+			$this->log('Unsupported export format');
+			break;
 		}
+	}
 
-		$controller =& $this->controller;
-		$url = $controller->params['url'];
-
+	function _extractGetParams($url) {
 		App::import('Vendor', 'Cholesterol.utils');
 		$page = array_key_value('page', $url);
 		$rows = array_key_value('rows', $url);
 		$sidx = array_key_value('sidx', $url);
 		$sord = array_key_value('sord', $url);
-		$_search = array_key_value('_search', $url);
-		$exportToExcel = array_key_value('exportToExcel', $url);
+		$_search = (boolean) array_key_value('_search', $url);
+		$exportToExcel = (boolean) array_key_value('exportToExcel', $url);
+
+		return compact('page', 'rows', 'sidx', 'sord', '_search', 'exportToExcel');
+	}
+
+	function _getFieldOrder($sidx, $sord) {
+		if (!empty($sidx)) {
+			$field_order = $sidx . ' ' . $sord;
+		} else {
+			$field_order = null;
+		}
+		return $field_order;
+	}
+
+	function find($modelName, $options = array(), $gridOptions = array()) {
+
+		if (is_array($options) && array_key_exists('conditions', $options)) {
+			extract($options);
+			$gridOptions += array(
+				'filterMode' => 'like',
+				'exportOptions' => array(
+					'type' => 'csv',
+					'export_filename' => 'report.csv',
+					'export_headers' => array(),
+				)
+			);
+			extract($gridOptions);
+		}
+
+		extract($this->_extractGetParams($this->controller->params['url']));
 
 		$limit = $rows == 0 ? 10 : $rows;
-		$start = $limit * $page - $limit;
-
-		if (empty($order)) {
-			if (!empty($sidx)) {
-				$field_order = $sidx . ' ' . $sord;
-			} else {
-				$field_order = null;
-			}
-		} else {
-			$field_order = $order;
-		}
+		$field_order = isset($order) ? $order : $this->_getFieldOrder($sidx, $sord);
 
 		$model = ClassRegistry::init($modelName);
 
@@ -125,17 +152,15 @@ class JqgridComponent extends Object {
 			$needFields = array($modelName => array_keys($model->_schema));
 		}
 
-		if ($_search == 'true') {
-			$this->_mergeFilterConditions($conditions, $needFields);
+		if ($_search) {
+			$this->_mergeFilterConditions($options['conditions'], $needFields, $filterMode);
 		}
 
-		$findCountOptions = array('conditions' => $conditions);
-		if (isset($contain)) {
-			$findCountOptions += array('contain' => $contain);
-		}
-		$count = $model->find('count', $findCountOptions);
+		$countOptions = $options;
+		unset ($countOptions['fields']);
+		$count = $model->find('count', $countOptions);
 
-		if (strcmp($exportToExcel, 'true') == 0) {
+		if ($exportToExcel) {
 			$page = 1;
 			$limit = 65535;
 			$this->controller->autoRender = false;
@@ -143,26 +168,19 @@ class JqgridComponent extends Object {
 			$this->controller->view = 'Cholesterol.Json';
 		}
 
-		$findOptions = array_merge(array('conditions' => $conditions), array(
+		$findOptions = $options + array(
 			'recursive' => $recursive,
 			'page' => $page,
 			'limit' => $limit,
 			'order' => $field_order
-			)
-		);
-		if (isset($contain)) {
-			$findOptions += array('contain' => $contain);
-		}
+			);
 
 		$rows = $model->find('all', $findOptions);
 
-		if (strcmp($exportToExcel, 'true') == 0) {
-			return $this->exportToExcel($rows, array(
-				'fields' => $fields,
-				'export_headers' => $export_headers,
-				'filename' => $export_filename
-			));
+		if ($exportToExcel) {
+			return $this->_exportToFile($fields, $rows, $exportOptions);
 		}
+
 		$total_pages = $count > 0 ? ceil($count/$limit) : 0;
 		$row_count = count($rows);
 
@@ -172,9 +190,17 @@ class JqgridComponent extends Object {
 			'total' => $total_pages
 			);
 
-		for ($i = 0; $i < $row_count; $i++) {
+		$response += $this->_constructResponse($rows, $needFields);
+
+		$this->controller->set(compact('response'));
+		$this->controller->set('json', 'response');
+	}
+
+	function _constructResponse($rows, $fields) {
+		$response = array();
+		for ($i = 0, $row_count = count($rows); $i < $row_count; $i++) {
 			$row =& $rows[$i];
-			foreach ($needFields as $gridModel => $gridFields) {
+			foreach ($fields as $gridModel => $gridFields) {
 
 				for ($j = 0; $j < count($gridFields); $j++) {
 					$gridField = $gridFields[$j];
@@ -191,9 +217,7 @@ class JqgridComponent extends Object {
 				}
 			}
 		}
-
-		$this->controller->set(compact('response'));
-		$this->controller->set('json', 'response');
+		return $response;
 	}
 }
 
