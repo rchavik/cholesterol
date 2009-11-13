@@ -115,7 +115,6 @@ class JqgridComponent extends Object {
 		}
 
 		$model = ClassRegistry::init($modelName);
-		$model->recursive = $recursive;
 
 		if (!empty($fields)) {
 			// user has specified wanted fields, so use it.
@@ -135,9 +134,12 @@ class JqgridComponent extends Object {
 			$page = 1;
 			$limit = 65535;
 			$this->controller->autoRender = false;
+		} else {
+			$this->controller->view = 'Cholesterol.Json';
 		}
 
 		$findOptions = array_merge(array('conditions' => $conditions), array(
+			'recursive' => $recursive,
 			'page' => $page,
 			'limit' => $limit,
 			'order' => $field_order
@@ -155,35 +157,36 @@ class JqgridComponent extends Object {
 		}
 		
 		$total_pages = $count > 0 ? ceil($count/$limit) : 0;
+		$row_count = count($rows);
 
-		$response->page = $page;
-		$response->records = count($rows);
-		$response->total =  $total_pages;
+		$response = array(
+			'page' => $page,
+			'records' => $row_count,
+			'total' => $total_pages
+			);
 
-		for ($i = 0; !empty($rows) && $i < count($rows); $i++) {
+		for ($i = 0; $i < $row_count; $i++) {
 			$row =& $rows[$i];
-
 			foreach ($needFields as $gridModel => $gridFields) {
 
 				for ($j = 0; $j < count($gridFields); $j++) {
 					$gridField = $gridFields[$j];
 					// XXX: assume that an 'id' field exist
 					if ($gridField == 'id') {
-						$response->rows[$i]['id'] = $row[$gridModel][$gridField];
+						$response['rows'][$i]['id'] = $row[$gridModel][$gridField];
 					}
 					if (array_key_exists($gridModel, $row) &&
 					    array_key_exists($gridField, $row[$gridModel])) {
 
 						$fieldName = $gridModel . '.' . $gridField;
-						$response->rows[$i][$fieldName] = $row[$gridModel][$gridField];
+						$response['rows'][$i][$fieldName] = $row[$gridModel][$gridField];
 					}
 				}
 			}
 		}
 
-		$res = object_to_array($response);
-		$this->controller->set(compact('res'));
-		$this->controller->set('json', 'res');
+		$this->controller->set(compact('response'));
+		$this->controller->set('json', 'response');
 	}
 }
 
