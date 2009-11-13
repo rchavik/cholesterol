@@ -86,6 +86,7 @@ EOF;
 			'colModel' => array(),
 			'rowNum' => 5,
 			'rowList' => array(5, 10),
+			'viewrecords' => true,
 			'width' => '100%',
 			'jsonReader' => array(
 				'repeatitems' => false,

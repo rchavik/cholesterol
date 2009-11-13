@@ -23,7 +23,7 @@ class JqgridComponent extends Object {
 		return $res;
 	}
 
-	function _mergeSearchConditions(&$conditions, $needFields) {
+	function _mergeFilterConditions(&$conditions, $needFields) {
 		$ignoreList = array('ext', 'url', '_search', 'nd', 'page', 'rows', 'sidx', 'sord');
 
 		$url = $this->controller->params['url'];
@@ -34,6 +34,7 @@ class JqgridComponent extends Object {
 
 			// XXX: convert back _ to . when appropriate
 			// TODO: check against $needFields
+			$newkey = $key;
 			if (strstr($key, '_')) {
 				$newkey = preg_replace('/_/', '.', $key, 1);
 			}
@@ -125,10 +126,14 @@ class JqgridComponent extends Object {
 		}
 
 		if ($_search == 'true') {
-			$this->_mergeSearchConditions($conditions, $needFields);
+			$this->_mergeFilterConditions($conditions, $needFields);
 		}
 
-		$count = $model->find('count', $conditions);
+		$findCountOptions = array('conditions' => $conditions);
+		if (isset($contain)) {
+			$findCountOptions += array('contain' => $contain);
+		}
+		$count = $model->find('count', $findCountOptions);
 
 		if (strcmp($exportToExcel, 'true') == 0) {
 			$page = 1;
@@ -145,6 +150,9 @@ class JqgridComponent extends Object {
 			'order' => $field_order
 			)
 		);
+		if (isset($contain)) {
+			$findOptions += array('contain' => $contain);
+		}
 
 		$rows = $model->find('all', $findOptions);
 
@@ -155,7 +163,6 @@ class JqgridComponent extends Object {
 				'filename' => $export_filename
 			));
 		}
-		
 		$total_pages = $count > 0 ? ceil($count/$limit) : 0;
 		$row_count = count($rows);
 
