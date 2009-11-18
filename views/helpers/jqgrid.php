@@ -9,56 +9,84 @@ class JqgridHelper extends AppHelper {
 
 	var $helpers = array('Javascript');
 
+	var $modelName;
+
+	var $pager; // ID of pager element
+
+	var $filterToolbar;
+
+	var $exportToExcel;
+
 	/** Generate container for jqGrid */
 	function grid($id, $options = array()) {
 		$options = array_merge(array(
+			'modelName' => false,
 			'class' => false,
 			'pager' => false,
 			'pagerClass' => false,
+			'filterToolbar' => false,
 			'exportToExcel' => false,
 			), $options);
 
-		$tableClass = $pager = '';
+		$tableClass = $pagerhtml = $formhtml = '';
+		$this->filterToolbar = $options['filterToolbar'];
+		$this->exportToExcel = $options['exportToExcel'];
 
 		if ($options['class'] !== false) {
 			$tableClass = 'class=\''. $options['class'] . '\'';
 		}
 
-		if ($options['pager'] !== false) {
-			$pager = $options['pager'];
-			if ($options['pagerClass'] !== false) {
-				$pager = '<div id=\'' . $pager . '\'></div>';
-			} else {
-				$pager = '<div id=\'' . $pager . '\' class=\'' . 
-					$options['pagerClass'] . '\'></div>';
-			}
+		if (!$options['modelName'] === false) {
+			$this->modelName = $options['modelName'];
+		} else {
+			$this->modelName = Inflector::classify($id);
 		}
 
-		if ($options['exportToExcel'] == true) {
-			$iframe_id = 'export_excel_' . $id;
-			$iframe =<<<EOF
+		if ($this->exportToExcel == true) {
+			$options['pager'] = true;
+			$formhtml =<<<EOF
 <style>
-.export-excel-form input {
+.eexport-excel-form input {
 	visibility: hidden;
 	display: none;
 }
 </style>
-<iframe id=$iframe_id style="visibility: hidden; display: none;"></iframe>
-<form id=form_download_{$id} class=export-excel-form target="{$iframe_id}">
-	<input id=_search name=_search />
-	<input id=nd name=nd />
-	<input id=page name=page />
-	<input id=rows name=rows />
-	<input id=sidx name=sidx />
-	<input id=sord name=sord />
-	<input id=exportToExcel name=exportToExcel />
-</form>
+<form id=form_download_{$id} class=export-excel-form></form>
 EOF;
-		} else {
-			$iframe = '';
 		}
 
-		return $iframe . '<table id=\'' . $id . '\'' . $tableClass . '></table>' . $pager;
+		if ($options['pager'] !== false) {
+			if ($options['pager'] === true) {
+				$pager = 'pager_' . Inflector::underscore($id);
+			} else {
+				$pager = $options['pager'];
+			}
+
+			$this->pager = $pager;
+
+			if ($options['pagerClass'] !== false) {
+				$pagerhtml = '<div id=\'' . $pager . '\'></div>';
+			} else {
+				$pagerhtml = '<div id=\'' . $pager . '\' class=\'' . 
+					$options['pagerClass'] . '\'></div>';
+			}
+		}
+
+		return $formhtml . '<table id=\'' . $id . '\'' . $tableClass . '></table>' . $pagerhtml;
+	}
+
+	function _useModelSchema(&$gridOptions) {
+		$model = ClassRegistry::init($this->modelName);
+
+		$colModel =& $gridOptions['colModel'];
+
+		foreach ($model->_schema as $fieldName => $fieldInfo) {
+			$colModel[] = array(
+				'index' => $this->modelName . '.' . $fieldName,
+				'name' => $this->modelName . '.' . $fieldName,
+				'label' => Inflector::humanize($fieldName),
+				);
+		}
 	}
 
 	/** Generate javascript block for jqGrid 
@@ -71,7 +99,6 @@ EOF;
 
 		$options = array_merge(array(
 			'filterToolbar' => true,
-			'exportToExcel' => false,
 			), $options
 		);
 
@@ -102,6 +129,21 @@ EOF;
 			'search' => false,
 			), $navGridOptions);
 
+
+		if (!empty($this->pager)) {
+			$pager = $this->pager;
+		}
+		if (!empty($gridOptions['pager'])) {
+			$pager = $gridOptions['pager'];
+		}
+		if (!empty($pager)) {
+			$gridOptions['pager'] = $pager;
+		}
+
+		if (empty($gridOptions['colModel'])) {
+			$this->_useModelSchema($gridOptions);
+		}
+
 		$buffer = json_encode($gridOptions);
 		$buffer = str_replace('\r\n', '', $buffer);
 		$buffer = str_replace('\n', '', $buffer);
@@ -123,9 +165,10 @@ EOF;
 		$jsonNavGridOptions = $buffer;
 
 		$code = '';
-		if (!empty($gridOptions['pager'])) {
+
+		if (!empty($pager)) {
 			$code .=<<<EOF
-var grid = $('#{$id}').jqGrid($jsonOptions).navGrid('#$gridOptions[pager]', $jsonNavGridOptions);
+var grid = $('#{$id}').jqGrid($jsonOptions).navGrid('#$pager', $jsonNavGridOptions);
 EOF;
 
 		} else {
@@ -134,28 +177,27 @@ var grid = $('#{$id}').jqGrid($jsonOptions);
 EOF;
 		}
 
-		if ($options['exportToExcel']) {
+		if ($this->exportToExcel) {
 			$code .=<<<EOF
-grid.navButtonAdd('#$gridOptions[pager]',{
+grid.navButtonAdd('#$pager',{
 	caption: '',
 	buttonicon: 'ui-icon-disk',
 	onClickButton: function() {
 		var url = grid.getGridParam('url')
 		var post = grid.getPostData();
 		var param = [];
-		var iframe = $('#export_excel_{$id}');
 		var form = $('#form_download_{$id}');
 		post.exportToExcel = true;
 
+		var inputs = '';
 		for (p in post) { 
 			var item = p + '=' + post[p]; 
-			$('#' + p).val(post[p]);
+			inputs += '<input name="' + p + '" value="' + post[p] + '">';
 			param.push(item) 
 		}
+		form.html(inputs);
 
-		var action = url + '?' + param.join('&');
-
-		form.attr('action', action).submit();
+		form.attr('action', url).submit();
 
 		delete post.exportToExcel;
 	}, 
@@ -163,7 +205,7 @@ grid.navButtonAdd('#$gridOptions[pager]',{
 });
 EOF;
 		}
-		if ($options['filterToolbar']) {
+		if ($this->filterToolbar) {
 			$code .=<<<EOF
 grid.filterToolbar();
 EOF;

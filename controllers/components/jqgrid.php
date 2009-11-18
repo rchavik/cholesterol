@@ -7,12 +7,31 @@
  *  @author Rachman Chavik
  *  @license MIT
  */
-class JqgridComponent extends Object {
+class JqgridComponent extends Component {
 
 	var $controller;
 
-	function initialize(&$controller) {
+	function initialize(&$controller, $settings = array()) {
 		$this->controller = $controller;
+
+		$settings += array(
+			'filterMode' => 'like',
+			'exportOptions' => array(
+				'type' => 'csv',
+				'export_filename' => 'report.csv',
+				'export_headers' => array(),
+			)
+		);
+
+		$this->apply($settings);
+		parent::initialize($controller, $settings);
+	}
+
+	/** change/apply component's settings */
+	function apply($settings) {
+		foreach ($settings as $setting => $value) {
+			$this->__settings[$setting] = $value;
+		}
 	}
 
 	function _extractFields($fields) {
@@ -44,7 +63,7 @@ class JqgridComponent extends Object {
 				$conditions[$newkey] = $val; 
 				break;
 			default:
-				$conditions[$newkey . ' like'] = $val . '%';
+				$conditions[$newkey . ' like'] = '%' . $val . '%';
 				break;
 			}
 		}
@@ -122,19 +141,10 @@ class JqgridComponent extends Object {
 		return $field_order;
 	}
 
-	function find($modelName, $options = array(), $gridOptions = array()) {
+	function find($modelName, $options = array()) {
 
 		if (is_array($options) && array_key_exists('conditions', $options)) {
 			extract($options);
-			$gridOptions += array(
-				'filterMode' => 'like',
-				'exportOptions' => array(
-					'type' => 'csv',
-					'export_filename' => 'report.csv',
-					'export_headers' => array(),
-				)
-			);
-			extract($gridOptions);
 		}
 
 		extract($this->_extractGetParams($this->controller->params['url']));
@@ -153,7 +163,7 @@ class JqgridComponent extends Object {
 		}
 
 		if ($_search) {
-			$this->_mergeFilterConditions($options['conditions'], $needFields, $filterMode);
+			$this->_mergeFilterConditions($options['conditions'], $needFields, $this->__settings['filterMode']);
 		}
 
 		$countOptions = $options;
@@ -178,7 +188,7 @@ class JqgridComponent extends Object {
 		$rows = $model->find('all', $findOptions);
 
 		if ($exportToExcel) {
-			return $this->_exportToFile($fields, $rows, $exportOptions);
+			return $this->_exportToFile($fields, $rows, $this->settings['exportOptions']);
 		}
 
 		$total_pages = $count > 0 ? ceil($count/$limit) : 0;
