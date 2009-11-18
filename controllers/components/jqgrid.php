@@ -14,24 +14,7 @@ class JqgridComponent extends Component {
 	function initialize(&$controller, $settings = array()) {
 		$this->controller = $controller;
 
-		$settings += array(
-			'filterMode' => 'like',
-			'exportOptions' => array(
-				'type' => 'csv',
-				'export_filename' => 'report.csv',
-				'export_headers' => array(),
-			)
-		);
-
-		$this->apply($settings);
 		parent::initialize($controller, $settings);
-	}
-
-	/** change/apply component's settings */
-	function apply($settings) {
-		foreach ($settings as $setting => $value) {
-			$this->__settings[$setting] = $value;
-		}
 	}
 
 	function _extractFields($fields) {
@@ -43,7 +26,7 @@ class JqgridComponent extends Component {
 	}
 
 	function _mergeFilterConditions(&$conditions, $needFields, $filterMode) {
-		$ignoreList = array('ext', 'url', '_search', 'nd', 'page', 'rows', 'sidx', 'sord', 'exportToExcel');
+		$ignoreList = array('ext', 'url', '_search', 'nd', 'page', 'rows', 'sidx', 'sord', 'exportOptions', 'filterMode');
 
 		$url = $this->controller->params['url'];
 		foreach ($url as $key => $val) {
@@ -70,28 +53,22 @@ class JqgridComponent extends Component {
 	}
 
 	/** Export grid data to CSV */
-	function _exportToCSV($fields, $rows, $exportOptions = array()) {
-		$exportOptions += array(
-			'headers' => array(),
-			'export_headers' => array(),
-			'export_filename' => 'report.csv'
-			);
-		extract($exportOptions);
-		$download_filename = $export_filename;
+	function _exportToCSV($fields, $rows, $exportOptions) {
+		$download_filename = $exportOptions->filename;
 		header('Content-Type: application/vnd.ms-excel');
 		header('Content-Disposition: attachment; filename='. urlencode($download_filename));
 		header("Content-Transfer-Encoding: binary\n");
 
 		$rowLen = count($rows);
 		$fieldLen = count($fields);
-		$hasHeaders = !empty($export_headers);
+		$hasHeaders = !empty($exportOptions->headers);
 
 		// construct list of column headers and display it accordingly
 		for ($i = 0; $i < $fieldLen; $i++) {
 			$dict = explode('.', $fields[$i]);
 			$fieldList[] = $dict;
 			if ($hasHeaders) {
-				echo $export_headers[$i] . ',';
+				echo $exportOptions->headers[$i] . ',';
 			} else {
 				echo $dict[1] . ',';
 			}
@@ -110,7 +87,7 @@ class JqgridComponent extends Component {
 	}
 
 	function _exportToFile($fields, $rows, $exportOptions) {
-		switch ($exportOptions['type']) {
+		switch ($exportOptions->type) {
 		case 'csv':
 			return $this->_exportToCSV($fields, $rows, $exportOptions); 
 			break;
@@ -127,9 +104,13 @@ class JqgridComponent extends Component {
 		$sidx = array_key_value('sidx', $url);
 		$sord = array_key_value('sord', $url);
 		$_search = (boolean) array_key_value('_search', $url);
-		$exportToExcel = (boolean) array_key_value('exportToExcel', $url);
+		$filterMode = array_key_value('filterMode', $url);
+		$exportOptions = urldecode(array_key_value('exportOptions', $url));
+		$exportOptions = $exportOptions == '' ? null : json_decode($exportOptions);
 
-		return compact('page', 'rows', 'sidx', 'sord', '_search', 'exportToExcel');
+		return compact('page', 'rows', 'sidx', 'sord', '_search', 
+			'filterMode', 'exportOptions'
+		);
 	}
 
 	function _getFieldOrder($sidx, $sord) {
@@ -143,10 +124,13 @@ class JqgridComponent extends Component {
 
 	function find($modelName, $options = array()) {
 
-		if (is_array($options) && array_key_exists('conditions', $options)) {
-			extract($options);
-		}
+		$options += array(
+			'conditions' => array(),
+			'recursive' => -1,
+			'fields' => array()
+			);
 
+		extract($options);
 		extract($this->_extractGetParams($this->controller->params['url']));
 
 		$limit = $rows == 0 ? 10 : $rows;
@@ -163,14 +147,14 @@ class JqgridComponent extends Component {
 		}
 
 		if ($_search) {
-			$this->_mergeFilterConditions($options['conditions'], $needFields, $this->__settings['filterMode']);
+			$this->_mergeFilterConditions($options['conditions'], $needFields, $filterMode);
 		}
 
 		$countOptions = $options;
 		unset ($countOptions['fields']);
 		$count = $model->find('count', $countOptions);
 
-		if ($exportToExcel) {
+		if ($exportOptions && $exportOptions->type == 'csv') {
 			$page = 1;
 			$limit = 65535;
 			$this->controller->autoRender = false;
@@ -187,8 +171,8 @@ class JqgridComponent extends Component {
 
 		$rows = $model->find('all', $findOptions);
 
-		if ($exportToExcel) {
-			return $this->_exportToFile($fields, $rows, $this->settings['exportOptions']);
+		if (!empty($exportOptions)) {
+			return $this->_exportToFile($fields, $rows, $exportOptions);
 		}
 
 		$total_pages = $count > 0 ? ceil($count/$limit) : 0;

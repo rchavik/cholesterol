@@ -11,7 +11,10 @@ jqGrid (tested on version 3.5.3) - http://www.trirand.com/blog/?page_id=6
 
 Tested with cakephp 1.3. May work with 1.2.5.
 
-Listed below is an example to use this plugin.
+Demo of this plugin is currently available in http://chavik.com/cholesterolized
+The demo source code can be found in http://github.com/rchavik/cholestorized
+
+For the impatient, use the following example as a starting point:
 
 <?php
 // controllers/users_controller.php
@@ -26,46 +29,23 @@ class UsersController extends AppController {
 
 	// Retrieve data for the grid in Json format
 	function get_list_users() {
-		// This plugin assumes data is transferred in JSON format
-		$this->view = 'Cholesterol.Json'; 
-		// Perform the actual query using JqgridComponent. 
-		// The parameters mimics AppModel->find()
-		$this->Jqgrid->find('User', array(
-			'conditions' => array(),
-			'fields' => array('User.id', 'User.username'),
-			'order' => null,
-			'recursive' => 0,
-			'export_filename' => 'export.csv' // when exportToExcel is true
-			)
-		);
+		// Perform the actual query using JqgridComponent and prepare
+		// the JSON response for the grid. 
+		$this->Jqgrid->find('User');
 	}
 ?>
 
 <?php
 // views/users/list_users.ctp
-echo $jqgrid->grid('grid_user');
+echo $jqgrid->grid('user');
 
 // Minimal configuration required to setup jqgrid initialization 
 // The format of $options array follows jqgrid configuration 
 // NOTE: javascript blocks (eg: for event handling) needs to be enclosed
 // with <script> and </script>
 // If anyone has better solution for this, please let me know
-echo $jqgrid->script('grid_user', array(
-	'caption' => 'Users',
+echo $jqgrid->script('user', array(
 	'url' => '/users/get_list_users.json',
-	'colModel' => array(
-		array(
-			'label' => 'ID',
-			'name' => 'User.id',
-			'index' => 'User.id',
-			),
-		array(
-			'label' => 'Username',
-			'name' => 'User.username',
-			'index' => 'User.username',
-			),
-		),
-	'exportToExcel' => true, // add a button to save grid into a CSV file
 	'loadComplete' => '
 <script>
 function() {
@@ -77,6 +57,8 @@ function() {
 );
 
 ?>
+
+Note: I still consider this plugin as very unstable.
 
 Good luck and have fun.
 -- rchavik

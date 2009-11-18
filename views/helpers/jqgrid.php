@@ -15,7 +15,7 @@ class JqgridHelper extends AppHelper {
 
 	var $filterToolbar;
 
-	var $exportToExcel;
+	var $exportOptions;
 
 	/** Generate container for jqGrid */
 	function grid($id, $options = array()) {
@@ -25,12 +25,14 @@ class JqgridHelper extends AppHelper {
 			'pager' => false,
 			'pagerClass' => false,
 			'filterToolbar' => false,
-			'exportToExcel' => false,
+			'filterMode' => 'exact',
+			'exportOptions' => array(),
 			), $options);
 
 		$tableClass = $pagerhtml = $formhtml = '';
 		$this->filterToolbar = $options['filterToolbar'];
-		$this->exportToExcel = $options['exportToExcel'];
+		$this->filterMode = $options['filterMode'];
+		$this->exportOptions = $options['exportOptions'];
 
 		if ($options['class'] !== false) {
 			$tableClass = 'class=\''. $options['class'] . '\'';
@@ -42,11 +44,11 @@ class JqgridHelper extends AppHelper {
 			$this->modelName = Inflector::classify($id);
 		}
 
-		if ($this->exportToExcel == true) {
+		if (!empty($this->exportOptions)) {
 			$options['pager'] = true;
 			$formhtml =<<<EOF
 <style>
-.eexport-excel-form input {
+.export-excel-form input {
 	visibility: hidden;
 	display: none;
 }
@@ -95,12 +97,7 @@ EOF;
 	 *  @param $navGridOption mixed jqgrid's navigator options
 	 *  @param $option mixed Only support array('filterToolbar' = true|false) at this point
 	 */
-	function script($id, $gridOptions = array(), $navGridOptions = array(), $options = array()) {
-
-		$options = array_merge(array(
-			'filterToolbar' => true,
-			), $options
-		);
+	function script($id, $gridOptions = array(), $navGridOptions = array()) {
 
 		$gridOptions = array_merge(array(
 			'caption' => null,
@@ -177,7 +174,14 @@ var grid = $('#{$id}').jqGrid($jsonOptions);
 EOF;
 		}
 
-		if ($this->exportToExcel) {
+		if ($this->filterMode) {
+			$code .=<<<EOF
+grid.getPostData().filterMode = '{$this->filterMode}';
+EOF;
+		}
+		if (!empty($this->exportOptions)) {
+
+			$jsonExportOptions = json_encode($this->exportOptions);
 			$code .=<<<EOF
 grid.navButtonAdd('#$pager',{
 	caption: '',
@@ -187,7 +191,8 @@ grid.navButtonAdd('#$pager',{
 		var post = grid.getPostData();
 		var param = [];
 		var form = $('#form_download_{$id}');
-		post.exportToExcel = true;
+
+		post.exportOptions = encodeURIComponent('{$jsonExportOptions}');
 
 		var inputs = '';
 		for (p in post) { 
@@ -197,9 +202,9 @@ grid.navButtonAdd('#$pager',{
 		}
 		form.html(inputs);
 
-		form.attr('action', url).submit();
+		delete post.exportOptions;
 
-		delete post.exportToExcel;
+		form.attr('action', url).submit();
 	}, 
 	position: 'last'
 });
