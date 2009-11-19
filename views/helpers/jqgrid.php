@@ -44,8 +44,11 @@ class JqgridHelper extends AppHelper {
 			$this->modelName = Inflector::classify($id);
 		}
 
-		if (!empty($this->exportOptions)) {
+		if (isset($this->exportOptions->type)) {
 			$options['pager'] = true;
+			if (!isset($this->exportOptions['filename'])) {
+				$this->exportOptions['filename'] = Inflector::underscore($this->modelName) . '.' . $this->exportOptions['type'];
+			}
 			$formhtml =<<<EOF
 <style>
 .export-excel-form input {
