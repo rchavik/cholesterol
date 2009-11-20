@@ -11,6 +11,23 @@ class JqgridComponent extends Component {
 
 	var $controller;
 
+	static $mapOpers = array(
+			'eq' => '',
+			'ne' => ' <>',
+			'lt' => ' <',
+			'le' => ' <=',
+			'gt' => ' >',
+			'ge' => ' >=',
+			'bw' => ' LIKE',
+			'bn' => ' NOT LIKE',
+			'in' => '',
+			'ni' => ' NOT',
+			'ew' => ' LIKE',
+			'en' => ' NOT LIKE',
+			'cn' => ' LIKE',
+			'nc' => ' NOT LIKE'
+			);
+
 	function initialize(&$controller, $settings = array()) {
 		$this->controller = $controller;
 
@@ -28,8 +45,9 @@ class JqgridComponent extends Component {
 		return $res;
 	}
 
+	/** construct $conditions array when using Filter Toolbar feature */
 	function _mergeFilterConditions(&$conditions, $needFields, $filterMode) {
-		$ignoreList = array('ext', 'url', '_search', 'nd', 'page', 'rows', 'sidx', 'sord', 'exportOptions', 'filterMode');
+		$ignoreList = array('ext', 'url', '_search', 'nd', 'page', 'rows', 'sidx', 'sord', 'exportOptions', 'filterMode', 'filters');
 
 		$url = $this->controller->params['url'];
 		foreach ($url as $key => $val) {
@@ -53,6 +71,49 @@ class JqgridComponent extends Component {
 				break;
 			}
 		}
+	}
+
+	/** construct $conditions array when using Advanced Search feature */
+	function _mergeAdvSearchConditions(&$conditions, $needFields, $filters) {
+
+		$rules = array();
+
+		foreach ($filters->rules as $rule) {
+
+			$op = JqgridComponent::$mapOpers[$rule->op];
+
+			$data = $rule->data;
+			switch ($rule->op) {
+			case 'bn':
+			case 'bw':
+				$data = $data . '%'; 
+				break;
+			case 'ew':
+			case 'en':
+				$data = '%' . $data;
+				break;
+			case 'cn':
+			case 'nc':
+				$data = '%' . $data . '%';
+				break;
+
+			case 'ni':
+				$data = strpos($data, ',') !== false ? explode(',', $data) : $data;
+				$data = array_map('trim', $data);
+				$op = is_string($data) ? ' <>' : $op;
+				break;
+
+			case 'in':
+				$data = strpos($data, ',') !== false ? explode(',', $data) : $data;
+				$data = array_map('trim', $data);
+				$op = is_string($data) ? '' : $op;
+				break;
+			}
+
+			$rules[]["{$rule->field}{$op}"] = $data;
+		}
+
+		$conditions[$filters->groupOp] =& $rules;
 	}
 
 	/** Export grid data to CSV */
@@ -110,9 +171,11 @@ class JqgridComponent extends Component {
 		$filterMode = array_key_value('filterMode', $url);
 		$exportOptions = urldecode(array_key_value('exportOptions', $url));
 		$exportOptions = $exportOptions == '' ? null : json_decode($exportOptions);
+		$filters = urldecode(array_key_value('filters', $url));
+		$filters = $filters == '' ? null : json_decode($filters);
 
 		return compact('page', 'rows', 'sidx', 'sord', '_search', 
-			'filterMode', 'exportOptions'
+			'filters', 'filterMode', 'exportOptions'
 		);
 	}
 
@@ -150,7 +213,11 @@ class JqgridComponent extends Component {
 		}
 
 		if ($_search) {
-			$this->_mergeFilterConditions($options['conditions'], $needFields, $filterMode);
+			if (!empty($filters)) {
+				$this->_mergeAdvSearchConditions($options['conditions'], $needFields, $filters);
+			} else {
+				$this->_mergeFilterConditions($options['conditions'], $needFields, $filterMode);
+			}
 		}
 
 		$countOptions = $options;

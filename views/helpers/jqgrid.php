@@ -44,8 +44,11 @@ class JqgridHelper extends AppHelper {
 			$this->modelName = Inflector::classify($id);
 		}
 
-		if (!empty($this->exportOptions)) {
+		if (isset($this->exportOptions->type)) {
 			$options['pager'] = true;
+			if (!isset($this->exportOptions['filename'])) {
+				$this->exportOptions['filename'] = Inflector::underscore($this->modelName) . '.' . $this->exportOptions['type'];
+			}
 			$formhtml =<<<EOF
 <style>
 .export-excel-form input {
@@ -95,7 +98,6 @@ EOF;
 	 *  @param $id string id of html element
 	 *  @param $gridOptions mixed jqgrid's option 
 	 *  @param $navGridOption mixed jqgrid's navigator options
-	 *  @param $option mixed Only support array('filterToolbar' = true|false) at this point
 	 */
 	function script($id, $gridOptions = array(), $navGridOptions = array()) {
 
@@ -120,12 +122,20 @@ EOF;
 		);
 
 		$navGridOptions = array_merge(array(
-			'add' => false,
-			'edit' => false,
-			'del' => false,
-			'search' => false,
+			'o' => array(
+				'add' => false,
+				'edit' => false,
+				'del' => false,
+				'search' => true,
+				),
+			'pEdit' => false,
+			'pAdd' => false,
+			'pDel' => false,
+			'pSearch' => array(
+				'multipleSearch' => true,
+				),
+			'pView' => null
 			), $navGridOptions);
-
 
 		if (!empty($this->pager)) {
 			$pager = $this->pager;
@@ -141,31 +151,20 @@ EOF;
 			$this->_useModelSchema($gridOptions);
 		}
 
-		$buffer = json_encode($gridOptions);
-		$buffer = str_replace('\r\n', '', $buffer);
-		$buffer = str_replace('\n', '', $buffer);
-		$buffer = str_replace('\r', '', $buffer);
-		$buffer = str_replace('\t', '', $buffer);
-		$buffer = str_replace('\"', '"', $buffer);
-		$buffer = str_replace('"<script>', '', $buffer);
-		$buffer = str_replace('<\/script>"', '', $buffer);
-		$jsonOptions = $buffer;
-
-		$buffer = json_encode($navGridOptions);
-		$buffer = str_replace('\r\n', '', $buffer);
-		$buffer = str_replace('\n', '', $buffer);
-		$buffer = str_replace('\r', '', $buffer);
-		$buffer = str_replace('\t', '', $buffer);
-		$buffer = str_replace('\"', '"', $buffer);
-		$buffer = str_replace('"<script>', '', $buffer);
-		$buffer = str_replace('<\/script>"', '', $buffer);
-		$jsonNavGridOptions = $buffer;
+		$jsonOptions = $this->_jsonEncode($gridOptions);
+		$jsonNavGridOptions = $this->_jsonEncode($navGridOptions['o']);
+		$jsonPEdit = $this->_jsonEncode($navGridOptions['pEdit']);
+		$jsonPAdd = $this->_jsonEncode($navGridOptions['pAdd']);
+		$jsonPDel = $this->_jsonEncode($navGridOptions['pDel']);
+		$jsonPSearch = $this->_jsonEncode($navGridOptions['pSearch']);
+		$jsonPView = $this->_jsonEncode($navGridOptions['pView']);
 
 		$code = '';
 
 		if (!empty($pager)) {
 			$code .=<<<EOF
-var grid = $('#{$id}').jqGrid($jsonOptions).navGrid('#$pager', $jsonNavGridOptions);
+var grid = $('#{$id}').jqGrid($jsonOptions).navGrid('#$pager', $jsonNavGridOptions, 
+	$jsonPEdit, $jsonPAdd, $jsonPDel, $jsonPSearch, $jsonPView);
 EOF;
 
 		} else {
@@ -179,6 +178,21 @@ EOF;
 grid.getPostData().filterMode = '{$this->filterMode}';
 EOF;
 		}
+
+		if ($this->filterToolbar) {
+			$code .=<<<EOF
+grid.navButtonAdd('#$pager',{
+	caption: '',
+	title: 'Clear Filter',
+	buttonicon: 'ui-icon-arrowrefresh-1-n',
+	onClickButton: function() {
+		grid[0].clearToolbar();
+	},
+	position: 'last'
+});
+EOF;
+		}
+
 		if (!empty($this->exportOptions)) {
 
 			$jsonExportOptions = json_encode($this->exportOptions);
@@ -210,6 +224,7 @@ grid.navButtonAdd('#$pager',{
 });
 EOF;
 		}
+
 		if ($this->filterToolbar) {
 			$code .=<<<EOF
 grid.filterToolbar();
@@ -218,13 +233,26 @@ EOF;
 
 		$script =<<<EOF
 $(document).ready(function() {
-	$code;
+	$code
 });
 EOF;
 
 		return $this->Javascript->codeBlock($script);
 	}
 
+	function _jsonEncode($array) {
+
+		$buffer = json_encode($array);
+		$buffer = str_replace('\r\n', '', $buffer);
+		$buffer = str_replace('\n', '', $buffer);
+		$buffer = str_replace('\r', '', $buffer);
+		$buffer = str_replace('\t', '', $buffer);
+		$buffer = str_replace('\"', '"', $buffer);
+		$buffer = str_replace('"<script>', '', $buffer);
+		$buffer = str_replace('<\/script>"', '', $buffer);
+
+		return $buffer;
+	}
 }
 
 ?>
