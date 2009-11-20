@@ -122,12 +122,20 @@ EOF;
 		);
 
 		$navGridOptions = array_merge(array(
-			'add' => false,
-			'edit' => false,
-			'del' => false,
-			'search' => false,
+			'o' => array(
+				'add' => false,
+				'edit' => false,
+				'del' => false,
+				'search' => true,
+				),
+			'pEdit' => false,
+			'pAdd' => false,
+			'pDel' => false,
+			'pSearch' => array(
+				'multipleSearch' => true,
+				),
+			'pView' => null
 			), $navGridOptions);
-
 
 		if (!empty($this->pager)) {
 			$pager = $this->pager;
@@ -143,31 +151,20 @@ EOF;
 			$this->_useModelSchema($gridOptions);
 		}
 
-		$buffer = json_encode($gridOptions);
-		$buffer = str_replace('\r\n', '', $buffer);
-		$buffer = str_replace('\n', '', $buffer);
-		$buffer = str_replace('\r', '', $buffer);
-		$buffer = str_replace('\t', '', $buffer);
-		$buffer = str_replace('\"', '"', $buffer);
-		$buffer = str_replace('"<script>', '', $buffer);
-		$buffer = str_replace('<\/script>"', '', $buffer);
-		$jsonOptions = $buffer;
-
-		$buffer = json_encode($navGridOptions);
-		$buffer = str_replace('\r\n', '', $buffer);
-		$buffer = str_replace('\n', '', $buffer);
-		$buffer = str_replace('\r', '', $buffer);
-		$buffer = str_replace('\t', '', $buffer);
-		$buffer = str_replace('\"', '"', $buffer);
-		$buffer = str_replace('"<script>', '', $buffer);
-		$buffer = str_replace('<\/script>"', '', $buffer);
-		$jsonNavGridOptions = $buffer;
+		$jsonOptions = $this->_jsonEncode($gridOptions);
+		$jsonNavGridOptions = $this->_jsonEncode($navGridOptions['o']);
+		$jsonPEdit = $this->_jsonEncode($navGridOptions['pEdit']);
+		$jsonPAdd = $this->_jsonEncode($navGridOptions['pAdd']);
+		$jsonPDel = $this->_jsonEncode($navGridOptions['pDel']);
+		$jsonPSearch = $this->_jsonEncode($navGridOptions['pSearch']);
+		$jsonPView = $this->_jsonEncode($navGridOptions['pView']);
 
 		$code = '';
 
 		if (!empty($pager)) {
 			$code .=<<<EOF
-var grid = $('#{$id}').jqGrid($jsonOptions).navGrid('#$pager', $jsonNavGridOptions);
+var grid = $('#{$id}').jqGrid($jsonOptions).navGrid('#$pager', $jsonNavGridOptions, 
+	$jsonPEdit, $jsonPAdd, $jsonPDel, $jsonPSearch, $jsonPView);
 EOF;
 
 		} else {
@@ -243,6 +240,19 @@ EOF;
 		return $this->Javascript->codeBlock($script);
 	}
 
+	function _jsonEncode($array) {
+
+		$buffer = json_encode($array);
+		$buffer = str_replace('\r\n', '', $buffer);
+		$buffer = str_replace('\n', '', $buffer);
+		$buffer = str_replace('\r', '', $buffer);
+		$buffer = str_replace('\t', '', $buffer);
+		$buffer = str_replace('\"', '"', $buffer);
+		$buffer = str_replace('"<script>', '', $buffer);
+		$buffer = str_replace('<\/script>"', '', $buffer);
+
+		return $buffer;
+	}
 }
 
 ?>
