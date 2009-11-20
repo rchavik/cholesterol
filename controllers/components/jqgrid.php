@@ -17,6 +17,9 @@ class JqgridComponent extends Component {
 		parent::initialize($controller, $settings);
 	}
 
+	function beforeRedirect(&$controller, $url, $status = null, $exit = true) {
+	}
+
 	function _extractFields($fields) {
 		for ($i = 0; $i < count($fields); $i++) {
 			$arr = explode('.', $fields[$i]);
