@@ -98,7 +98,6 @@ EOF;
 	 *  @param $id string id of html element
 	 *  @param $gridOptions mixed jqgrid's option 
 	 *  @param $navGridOption mixed jqgrid's navigator options
-	 *  @param $option mixed Only support array('filterToolbar' = true|false) at this point
 	 */
 	function script($id, $gridOptions = array(), $navGridOptions = array()) {
 
@@ -182,6 +181,21 @@ EOF;
 grid.getPostData().filterMode = '{$this->filterMode}';
 EOF;
 		}
+
+		if ($this->filterToolbar) {
+			$code .=<<<EOF
+grid.navButtonAdd('#$pager',{
+	caption: '',
+	title: 'Clear Filter',
+	buttonicon: 'ui-icon-arrowrefresh-1-n',
+	onClickButton: function() {
+		grid[0].clearToolbar();
+	},
+	position: 'last'
+});
+EOF;
+		}
+
 		if (!empty($this->exportOptions)) {
 
 			$jsonExportOptions = json_encode($this->exportOptions);
@@ -213,6 +227,7 @@ grid.navButtonAdd('#$pager',{
 });
 EOF;
 		}
+
 		if ($this->filterToolbar) {
 			$code .=<<<EOF
 grid.filterToolbar();
@@ -221,7 +236,7 @@ EOF;
 
 		$script =<<<EOF
 $(document).ready(function() {
-	$code;
+	$code
 });
 EOF;
 
