@@ -7,7 +7,7 @@
  *  @author Rachman Chavik
  *  @license MIT
  */
-class JqgridComponent extends Component {
+class JqgridComponent extends Object {
 
 	var $controller;
 
@@ -30,11 +30,6 @@ class JqgridComponent extends Component {
 
 	function initialize(&$controller, $settings = array()) {
 		$this->controller = $controller;
-
-		parent::initialize($controller, $settings);
-	}
-
-	function beforeRedirect(&$controller, $url, $status = null, $exit = true) {
 	}
 
 	function _extractFields($fields) {

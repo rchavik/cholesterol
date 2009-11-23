@@ -199,6 +199,7 @@ EOF;
 			$code .=<<<EOF
 grid.navButtonAdd('#$pager',{
 	caption: '',
+	title: 'Export to CSV',
 	buttonicon: 'ui-icon-disk',
 	onClickButton: function() {
 		var url = grid.getGridParam('url')
