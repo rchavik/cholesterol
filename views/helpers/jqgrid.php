@@ -151,13 +151,13 @@ EOF;
 			$this->_useModelSchema($gridOptions);
 		}
 
-		$jsonOptions = $this->_jsonEncode($gridOptions);
-		$jsonNavGridOptions = $this->_jsonEncode($navGridOptions['o']);
-		$jsonPEdit = $this->_jsonEncode($navGridOptions['pEdit']);
-		$jsonPAdd = $this->_jsonEncode($navGridOptions['pAdd']);
-		$jsonPDel = $this->_jsonEncode($navGridOptions['pDel']);
-		$jsonPSearch = $this->_jsonEncode($navGridOptions['pSearch']);
-		$jsonPView = $this->_jsonEncode($navGridOptions['pView']);
+		$jsonOptions = _json_encode($gridOptions);
+		$jsonNavGridOptions = _json_encode($navGridOptions['o']);
+		$jsonPEdit = _json_encode($navGridOptions['pEdit']);
+		$jsonPAdd = _json_encode($navGridOptions['pAdd']);
+		$jsonPDel = _json_encode($navGridOptions['pDel']);
+		$jsonPSearch = _json_encode($navGridOptions['pSearch']);
+		$jsonPView = _json_encode($navGridOptions['pView']);
 
 		$code = '';
 
@@ -241,19 +241,6 @@ EOF;
 		return $this->Javascript->codeBlock($script);
 	}
 
-	function _jsonEncode($array) {
-
-		$buffer = json_encode($array);
-		$buffer = str_replace('\r\n', '', $buffer);
-		$buffer = str_replace('\n', '', $buffer);
-		$buffer = str_replace('\r', '', $buffer);
-		$buffer = str_replace('\t', '', $buffer);
-		$buffer = str_replace('\"', '"', $buffer);
-		$buffer = str_replace('"<script>', '', $buffer);
-		$buffer = str_replace('<\/script>"', '', $buffer);
-
-		return $buffer;
-	}
 }
 
 ?>
