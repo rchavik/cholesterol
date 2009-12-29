@@ -9,18 +9,13 @@ class AutocompletableBehavior extends ModelBehavior {
 			$model->name . '.title like' => $q . '%',
 		);
 
+		$this->recursive = -1;
 		if ($extraFields) {
 			$conditions += array(
 				$extraFields['field'] => $extraFields['value']
 			);
-			$contain = $extraFields['field'];
-			$this->recursive = 0;
-		} else {
-			$contain = null;
-			$this->recursive = -1;
 		}
 		$result = $model->find('all', array(
-			'contain' => $contain,
 			'fields' => array('id', 'title'),
 			'conditions' => $conditions,
 			)
