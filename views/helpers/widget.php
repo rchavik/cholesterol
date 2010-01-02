@@ -16,8 +16,8 @@ class WidgetHelper extends AppHelper {
 		// import the component, and call component's method
 		if (App::import('Component', $componentName)) {
 			$component = ClassRegistry::init($componentClassName, 'component');
-			$url = Router::parse($elementName);
-			$methodName = $url['action'];
+			$splitElementName = split('/', $elementName);
+			$methodName = $splitElementName[1];
 			if (method_exists($component, $methodName)) {
 				$data = $component->{$methodName}();
 				$params += array('widget_data' => $data);
