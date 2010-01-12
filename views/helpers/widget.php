@@ -13,13 +13,20 @@ class WidgetHelper extends AppHelper {
 		$componentName = Inflector::classify($componentName . '_widget');
 		$componentClassName = $componentName . 'Component';
 
+		if (isset($params['widget_options'])) {
+			$widgetOptions = $params['widget_options'];
+			unset($params['widget_options']);
+		} else {
+			$widgetOptions = array();
+		}
+
 		// import the component, and call component's method
 		if (App::import('Component', $componentName)) {
 			$component = ClassRegistry::init($componentClassName, 'component');
 			$splitElementName = split('/', $elementName);
 			$methodName = $splitElementName[1];
 			if (method_exists($component, $methodName)) {
-				$data = $component->{$methodName}();
+				$data = $component->{$methodName}($widgetOptions);
 				$params += array('widget_data' => $data);
 			}
 		}
