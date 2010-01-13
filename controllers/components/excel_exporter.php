@@ -16,12 +16,12 @@ App::import(array(
 	'file' => 'PHPExcel/IOFactory.php'
 ));
 
-class ExcelExporter extends Object {
+class ExcelExporterComponent extends Object {
 
 	function _writeHeaders(&$xls, $options) {
 		$sheet = $xls->getActiveSheet();
 
-		if (isset($options['columnHeaders'])) {
+		if (!empty($options['columnHeaders'])) {
 
 			$columnHeaders = $options['columnHeaders'];
 

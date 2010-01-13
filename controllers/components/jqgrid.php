@@ -86,10 +86,34 @@ class JqgridComponent extends Component {
 		Configure::write('debug', 0);
 	}
 
+	function _exportToXls($fields, $rows, $exportOptions) {
+		if (!property_exists($this, 'ExcelExporter')) {
+			$this->log('Jqgrid requires ExcelExporter component');
+		}
+
+		$download_filename = $exportOptions->filename;
+		header('Content-Type: application/vnd.ms-excel');
+		header('Content-Disposition: attachment; filename='. urlencode($download_filename));
+		header("Content-Transfer-Encoding: binary\n");
+
+		$tempfile = tempnam('/tmp', 'CE2X');
+		$this->controller->ExcelExporter->export($rows, array(
+			'fields' => $fields,
+			'outputFile' => $tempfile,
+			)
+		);
+		Configure::write('debug', 0);
+		readfile($tempfile);
+		unlink($tempfile);
+	}
+
 	function _exportToFile($fields, $rows, $exportOptions) {
 		switch ($exportOptions->type) {
 		case 'csv':
 			return $this->_exportToCSV($fields, $rows, $exportOptions); 
+			break;
+		case 'xls':
+			return $this->_exportToXls($fields, $rows, $exportOptions);
 			break;
 		default:
 			$this->log('Unsupported export format');
@@ -154,9 +178,11 @@ class JqgridComponent extends Component {
 		unset ($countOptions['fields']);
 		$count = $model->find('count', $countOptions);
 
-		if ($exportOptions && $exportOptions->type == 'csv') {
-			$page = 1;
-			$limit = 65535;
+		if ($exportOptions) {
+			if (in_array(strtolower($exportOptions->type), array('xls','csv'))) {
+				$page = 1;
+				$limit = 65535;
+			}
 			$this->controller->autoRender = false;
 		} else {
 			$this->controller->view = 'Cholesterol.Json';
