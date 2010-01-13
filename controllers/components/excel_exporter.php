@@ -1,64 +1,94 @@
 <?php
 // vim: set ts=4 sts=4 sw=4 si noet:
 
+$include_path = get_include_path();
+$newpath = ($include_path . PATH_SEPARATOR . APP . 'vendors' . DS . 'phpexcel');
+set_include_path($newpath);
+
+App::import(array(
+	'type' => 'Vendor',
+	'name' => 'PHPExcel',
+	'file' => 'PHPExcel.php'
+));
+App::import(array(
+	'type' => 'Vendor',
+	'name' => 'PHPExcel_IOFactory',
+	'file' => 'PHPExcel/IOFactory.php'
+));
+
 class ExcelExporter extends Object {
 
 	function _writeHeaders(&$xls, $options) {
 		$sheet = $xls->getActiveSheet();
 
+		if (isset($options['columnHeaders'])) {
+
+			$columnHeaders = $options['columnHeaders'];
+
+		} else {
+
+			$columnHeaders = $options['fields'];
+			foreach ($columnHeaders as &$header) {
+				if (strstr($header, '.')) {
+					$split = explode('.', $header, 2);
+					$header = Inflector::humanize($split[1]);
+				} else {
+					$header = Inflector::humanize($header);
+				}
+			}
+			unset($header);
+
+		}
+
 		$col = ord('A');
-		foreach ($options['columnHeaders'] as $header) {
+		for ($i = 0, $ii = count($columnHeaders); $i < $ii; $i++) {
+			$header = $columnHeaders[$i];
 			$cell = chr($col) . '1';
 			$sheet->setCellValue ($cell, $header);
 			$col++;
 		}
-
 	}
 
-	function export($rows, $options = array()) {
+	/** Export $data into an Excel file
+	 *
+	 *  @param $data mixed data retrieved via Model->find operation
+	 *  @param $options mixed array of options
+	 *
+	 */
+	function export($data, $options = array()) {
 
 		$options += array(
-			'outputDirectory' => '/tmp',
 			'outputFile' => 'export.xls',
+			'columnHeaders' => array(),
+			'fields' => array(),
 			);
 
-		if (empty($rows)) {
+		if (empty($data)) {
 			trigger_error('No data to export');
 			return;
 		}
-
-
-		$include_path = get_include_path();
-		$newpath = ($include_path . PATH_SEPARATOR . APP . 'vendors' . DS . 'phpexcel');
-		set_include_path($newpath);
-
-		include_once('PHPExcel.php');
-		include_once('PHPExcel/IOFactory.php');
-		include_once('PHPExcel/Cell/DataType.php');
-
 
 		$xls = new PHPExcel();
 		$xls->setActiveSheetIndex(0);
 		$sheet = $xls->getActiveSheet();
 
-		if (!empty($options['columnHeaders'])) {
-			$this->_writeHeaders($xls, $options);
-		}
+		$this->_writeHeaders($xls, $options);
 
-		for ($i = 0, $ii = count($rows); $i < $ii; $i++) {
+		for ($i = 0, $ii = count($data); $i < $ii; $i++) {
 			$col = ord('A');
+			$row = $i + 2;
 			for ($c = 0, $cc = count($options['fields']); $c < $cc; $c++) {
 				$currentField = $options['fields'][$c];
 				$split = explode('.', $currentField, 2);
 				$modelName = $split[0];
 				$fieldName = $split[1];
 
-				if (!isset($rows[$i][$modelName][$fieldName])) {
+				if (!isset($data[$i][$modelName][$fieldName])) {
 					continue;
 				}
-				
-				$cell = chr($col) . ($i + 1);
-				$sheet->setCellValue($cell, $rows[$i][$modelName][$fieldName]);
+
+				$cell = chr($col) . $row;
+				$sheet->setCellValue($cell, $data[$i][$modelName][$fieldName]);
 				$col ++;
 			}
 		}
