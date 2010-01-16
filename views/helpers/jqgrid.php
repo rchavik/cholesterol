@@ -1,6 +1,8 @@
 <?php
 // vim: set ft=php ts=4 sts=4 sw=4 si noet:
 
+App::import('Vendor', 'Cholesterol.Utils');
+
 /** A very simple helper to generate html tags for use with jqGrid
  *  @author Rachman Chavik
  *  @license MIT
