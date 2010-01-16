@@ -5,6 +5,9 @@ $include_path = get_include_path();
 $newpath = ($include_path . PATH_SEPARATOR . APP . 'vendors' . DS . 'phpexcel');
 set_include_path($newpath);
 
+App::import('Core', 'Helper');
+App::import('Helper', 'Time');
+
 App::import(array(
 	'type' => 'Vendor',
 	'name' => 'PHPExcel',
@@ -17,6 +20,11 @@ App::import(array(
 ));
 
 class ExcelExporterComponent extends Object {
+
+	function __construct() {
+		$this->Time = new TimeHelper;
+		parent::__construct();
+	}
 
 	function _writeHeaders(&$xls, $options) {
 		$sheet = $xls->getActiveSheet();
@@ -55,28 +63,56 @@ class ExcelExporterComponent extends Object {
 	 *  @param $options mixed array of options
 	 *
 	 */
-	function export($data, $options = array()) {
+	function export($model, $data, $options = array()) {
 
-		$options += array(
-			'outputFile' => 'export.xls',
+		$needHeader = true;
+		$startRow = 2;
+		$startCol = 'A';
+
+		$options = Set::merge(array(
+			'template' => array(
+				'type' => 'Excel5',
+				'file' => null,
+				'startRow' => $startRow,
+				'startCol' => $startCol,
+				),
+			'output' => array(
+				'type' => 'Excel5',
+				'file' => 'export.xls',
+				),
 			'columnHeaders' => array(),
 			'fields' => array(),
-			);
+			'format' => array(
+				'date' => 'd/m/Y',
+				)
+			), $options
+		);
 
 		if (empty($data)) {
 			trigger_error('No data to export');
 			return;
 		}
 
-		$xls = new PHPExcel();
-		$xls->setActiveSheetIndex(0);
+		if (!empty($options['template'])) {
+			$template = $options['template'];
+			$startRow = $template['startRow'];
+			$startCol = $template['startCol'];
+			$reader = PHPExcel_IOFactory::createReader($template['type']);
+			$xls = $reader->load(($template['file']));
+			$needHeader = false;
+		} else {
+			$xls = new PHPExcel();
+			$xls->setActiveSheetIndex(0);
+		}
 		$sheet = $xls->getActiveSheet();
 
-		$this->_writeHeaders($xls, $options);
+		if ($needHeader) {
+			$this->_writeHeaders($xls, $options);
+		}
 
 		for ($i = 0, $ii = count($data); $i < $ii; $i++) {
 			$col = ord('A');
-			$row = $i + 2;
+			$row = $i + $startRow;
 			for ($c = 0, $cc = count($options['fields']); $c < $cc; $c++) {
 				$currentField = $options['fields'][$c];
 				$split = explode('.', $currentField, 2);
@@ -88,13 +124,45 @@ class ExcelExporterComponent extends Object {
 				}
 
 				$cell = chr($col) . $row;
-				$sheet->setCellValue($cell, $data[$i][$modelName][$fieldName]);
+
+				$fieldType = $this->_getColumnType($model, $modelName, $fieldName);
+				$fieldValue = $data[$i][$modelName][$fieldName];
+				$this->_setCellValue($sheet, $cell, $fieldType, $fieldValue, $options);
+
 				$col ++;
 			}
 		}
 
-		$writer = PHPExcel_IOFactory::createWriter($xls, 'Excel5');
-		$writer->save($options['outputFile']);
+		$writer = PHPExcel_IOFactory::createWriter($xls, $options['output']['type']);
+		$writer->save($options['output']['file']);
+	}
+
+	function _getColumnType($Model, $modelName, $fieldName) {
+		if ($modelName == $Model->name) {
+			$fieldType = $Model->getColumnType($fieldName);
+		} else {
+			if (property_exists($Model, $modelName)) {
+				$fieldType = $Model->{$modelName}->getColumnType($fieldName);
+			} else {
+				$fieldType = 'string';
+			}
+		}
+		return $fieldType;
+	}
+
+	/** Set cell value and format according to field type */
+	function _setCellValue($sheet, $cell, $fieldType, $fieldValue, $options) {
+		switch ($fieldType) {
+		case 'date':
+			$value = $this->Time->format($options['format']['date'], $fieldValue);
+			$sheet->getStyle($cell)->getNumberFormat()->setFormatCode(
+				PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY
+				);
+			$sheet->setCellValue($cell, $value);
+			break;
+		default:
+			$sheet->setCellValue($cell, $fieldValue);
+		}
 	}
 
 }
