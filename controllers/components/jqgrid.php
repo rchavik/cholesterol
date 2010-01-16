@@ -112,7 +112,7 @@ class JqgridComponent extends Object {
 	}
 
 	/** Export grid data to CSV */
-	function _exportToCSV($fields, $rows, $exportOptions) {
+	function _exportToCSV($modelName, $fields, $rows, $exportOptions) {
 		$download_filename = $exportOptions->filename;
 		header('Content-Type: application/vnd.ms-excel');
 		header('Content-Disposition: attachment; filename='. urlencode($download_filename));
@@ -145,7 +145,7 @@ class JqgridComponent extends Object {
 		Configure::write('debug', 0);
 	}
 
-	function _exportToXls($fields, $rows, $exportOptions) {
+	function _exportToXls($modelName, $fields, $rows, $exportOptions) {
 		if (!property_exists($this, 'ExcelExporter')) {
 			$this->log('Jqgrid requires ExcelExporter component');
 		}
@@ -156,9 +156,11 @@ class JqgridComponent extends Object {
 		header("Content-Transfer-Encoding: binary\n");
 
 		$tempfile = tempnam('/tmp', 'CE2X');
-		$this->controller->ExcelExporter->export($rows, array(
+		$this->controller->ExcelExporter->export($modelName, $rows, array(
 			'fields' => $fields,
-			'outputFile' => $tempfile,
+			'output' => array(
+				'file' => $tempfile,
+				)
 			)
 		);
 		Configure::write('debug', 0);
@@ -166,13 +168,13 @@ class JqgridComponent extends Object {
 		unlink($tempfile);
 	}
 
-	function _exportToFile($fields, $rows, $exportOptions) {
+	function _exportToFile($modelName, $fields, $rows, $exportOptions) {
 		switch ($exportOptions->type) {
 		case 'csv':
-			return $this->_exportToCSV($fields, $rows, $exportOptions); 
+			return $this->_exportToCSV($modelName, $fields, $rows, $exportOptions);
 			break;
 		case 'xls':
-			return $this->_exportToXls($fields, $rows, $exportOptions);
+			return $this->_exportToXls($modelName, $fields, $rows, $exportOptions);
 			break;
 		default:
 			$this->log('Unsupported export format');
@@ -263,7 +265,7 @@ class JqgridComponent extends Object {
 		$rows = $model->find('all', $findOptions);
 
 		if (!empty($exportOptions)) {
-			return $this->_exportToFile($fields, $rows, $exportOptions);
+			return $this->_exportToFile($modelName, $fields, $rows, $exportOptions);
 		}
 
 		$total_pages = $count > 0 ? ceil($count/$limit) : 0;

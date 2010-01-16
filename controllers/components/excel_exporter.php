@@ -63,7 +63,7 @@ class ExcelExporterComponent extends Object {
 	 *  @param $options mixed array of options
 	 *
 	 */
-	function export($model, $data, $options = array()) {
+	function export($modelName, $data, $options = array()) {
 
 		$needHeader = true;
 		$startRow = 2;
@@ -71,14 +71,14 @@ class ExcelExporterComponent extends Object {
 
 		$options = Set::merge(array(
 			'template' => array(
-				'type' => 'Excel5',
 				'file' => null,
+				'type' => 'Excel5',
 				'startRow' => $startRow,
 				'startCol' => $startCol,
 				),
 			'output' => array(
-				'type' => 'Excel5',
 				'file' => 'export.xls',
+				'type' => 'Excel5',
 				),
 			'columnHeaders' => array(),
 			'fields' => array(),
@@ -93,7 +93,7 @@ class ExcelExporterComponent extends Object {
 			return;
 		}
 
-		if (!empty($options['template'])) {
+		if (!empty($options['template']['file'])) {
 			$template = $options['template'];
 			$startRow = $template['startRow'];
 			$startCol = $template['startCol'];
@@ -110,39 +110,42 @@ class ExcelExporterComponent extends Object {
 			$this->_writeHeaders($xls, $options);
 		}
 
+		$Model = ClassRegistry::init($modelName);
+
 		for ($i = 0, $ii = count($data); $i < $ii; $i++) {
 			$col = ord('A');
 			$row = $i + $startRow;
 			for ($c = 0, $cc = count($options['fields']); $c < $cc; $c++) {
 				$currentField = $options['fields'][$c];
 				$split = explode('.', $currentField, 2);
-				$modelName = $split[0];
+				$fieldModel = $split[0];
 				$fieldName = $split[1];
 
-				if (!isset($data[$i][$modelName][$fieldName])) {
+				if (!isset($data[$i][$fieldModel][$fieldName])) {
 					continue;
 				}
 
 				$cell = chr($col) . $row;
 
-				$fieldType = $this->_getColumnType($model, $modelName, $fieldName);
-				$fieldValue = $data[$i][$modelName][$fieldName];
+				$fieldType = $this->_getColumnType($Model, $fieldModel, $fieldName);
+				$fieldValue = $data[$i][$fieldModel][$fieldName];
 				$this->_setCellValue($sheet, $cell, $fieldType, $fieldValue, $options);
 
 				$col ++;
 			}
 		}
 
+$this->log($options);
 		$writer = PHPExcel_IOFactory::createWriter($xls, $options['output']['type']);
 		$writer->save($options['output']['file']);
 	}
 
-	function _getColumnType($Model, $modelName, $fieldName) {
-		if ($modelName == $Model->name) {
+	function _getColumnType($Model, $fieldModel, $fieldName) {
+		if ($fieldModel == $Model->name) {
 			$fieldType = $Model->getColumnType($fieldName);
 		} else {
-			if (property_exists($Model, $modelName)) {
-				$fieldType = $Model->{$modelName}->getColumnType($fieldName);
+			if (property_exists($Model, $fieldModel)) {
+				$fieldType = $Model->{$fieldModel}->getColumnType($fieldName);
 			} else {
 				$fieldType = 'string';
 			}
