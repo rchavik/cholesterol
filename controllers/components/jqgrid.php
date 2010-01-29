@@ -120,14 +120,14 @@ class JqgridComponent extends Object {
 
 		$rowLen = count($rows);
 		$fieldLen = count($fields);
-		$hasHeaders = !empty($exportOptions->headers);
+		$hasHeaders = !empty($exportOptions['headers']);
 
 		// construct list of column headers and display it accordingly
 		for ($i = 0; $i < $fieldLen; $i++) {
 			$dict = explode('.', $fields[$i]);
 			$fieldList[] = $dict;
 			if ($hasHeaders) {
-				echo $exportOptions->headers[$i] . ',';
+				echo $exportOptions['headers'][$i] . ',';
 			} else {
 				echo $dict[1] . ',';
 			}
@@ -146,11 +146,12 @@ class JqgridComponent extends Object {
 	}
 
 	function _exportToXls($modelName, $fields, $rows, $exportOptions) {
-		if (!property_exists($this, 'ExcelExporter')) {
+		if (!property_exists($this->controller, 'ExcelExporter')) {
 			$this->log('Jqgrid requires ExcelExporter component');
 		}
 
-		$download_filename = $exportOptions->filename;
+		$download_filename = $exportOptions['filename'];
+		$columnHeaders = $exportOptions['columnHeaders'];
 		header('Content-Type: application/vnd.ms-excel');
 		header('Content-Disposition: attachment; filename='. urlencode($download_filename));
 		header("Content-Transfer-Encoding: binary\n");
@@ -158,6 +159,7 @@ class JqgridComponent extends Object {
 		$tempfile = tempnam('/tmp', 'CE2X');
 		$this->controller->ExcelExporter->export($modelName, $rows, array(
 			'fields' => $fields,
+			'columnHeaders' => $columnHeaders,
 			'output' => array(
 				'file' => $tempfile,
 				)
@@ -169,7 +171,7 @@ class JqgridComponent extends Object {
 	}
 
 	function _exportToFile($modelName, $fields, $rows, $exportOptions) {
-		switch ($exportOptions->type) {
+		switch ($exportOptions['type']) {
 		case 'csv':
 			return $this->_exportToCSV($modelName, $fields, $rows, $exportOptions);
 			break;
@@ -191,7 +193,7 @@ class JqgridComponent extends Object {
 		$_search = (boolean) array_key_value('_search', $url);
 		$filterMode = array_key_value('filterMode', $url);
 		$exportOptions = urldecode(array_key_value('exportOptions', $url));
-		$exportOptions = $exportOptions == '' ? null : json_decode($exportOptions);
+		$exportOptions = $exportOptions == '' ? null : json_decode($exportOptions, true);
 		$filters = urldecode(array_key_value('filters', $url));
 		$filters = $filters == '' ? null : json_decode($filters);
 
@@ -211,11 +213,11 @@ class JqgridComponent extends Object {
 
 	function find($modelName, $options = array()) {
 
-		$options += array(
+		$options += Set::merge(array(
 			'conditions' => array(),
 			'recursive' => -1,
 			'fields' => array()
-			);
+			), $options);
 
 		extract($options);
 		extract($this->_extractGetParams($this->controller->params['url']));
@@ -231,6 +233,10 @@ class JqgridComponent extends Object {
 		} else {
 			// fallback using model schema fields
 			$needFields = array($modelName => array_keys($model->_schema));
+
+			for ($i = 0, $ii = count($needFields[$modelName]); $i < $ii; $i++) {
+				$fields[] = $modelName . '.' . $needFields[$modelName][$i];
+			}
 		}
 
 		if ($_search) {
@@ -246,7 +252,7 @@ class JqgridComponent extends Object {
 		$count = $model->find('count', $countOptions);
 
 		if ($exportOptions) {
-			if (in_array(strtolower($exportOptions->type), array('xls','csv'))) {
+			if (in_array(strtolower($exportOptions['type']), array('xls','csv'))) {
 				$page = 1;
 				$limit = 65535;
 			}

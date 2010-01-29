@@ -103,7 +103,7 @@ EOF;
 	 */
 	function script($id, $gridOptions = array(), $navGridOptions = array()) {
 
-		$gridOptions = array_merge(array(
+		$gridOptions = Set::merge(array(
 			'caption' => null,
 			'datatype' => 'json',
 			'mtype' => 'GET',
@@ -123,7 +123,7 @@ EOF;
 			), $gridOptions
 		);
 
-		$navGridOptions = array_merge(array(
+		$navGridOptions = Set::merge(array(
 			'o' => array(
 				'add' => false,
 				'edit' => false,

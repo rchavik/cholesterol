@@ -135,7 +135,6 @@ class ExcelExporterComponent extends Object {
 			}
 		}
 
-$this->log($options);
 		$writer = PHPExcel_IOFactory::createWriter($xls, $options['output']['type']);
 		$writer->save($options['output']['file']);
 	}
