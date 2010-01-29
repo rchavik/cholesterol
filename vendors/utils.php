@@ -1,6 +1,8 @@
 <?php
 // vim: set ts=4 sts=4 sw=4 si noet:
 
+if (!function_exists('object_to_array')):
+
 function object_to_array($var) {
 	$result = array();
 	$references = array();
@@ -21,6 +23,8 @@ function object_to_array($var) {
 	}
 	return $result;
 }
+
+endif;
 
 function array_key_value($key, $array, $emptyValue = 0) {
 	return array_key_exists($key, $array) ? $array[$key] : $emptyValue;
