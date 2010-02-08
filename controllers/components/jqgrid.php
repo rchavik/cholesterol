@@ -113,7 +113,7 @@ class JqgridComponent extends Object {
 
 	/** Export grid data to CSV */
 	function _exportToCSV($modelName, $fields, $rows, $exportOptions) {
-		$download_filename = $exportOptions->filename;
+		$download_filename = $exportOptions['filename'];
 		header('Content-Type: application/vnd.ms-excel');
 		header('Content-Disposition: attachment; filename='. urlencode($download_filename));
 		header("Content-Transfer-Encoding: binary\n");
