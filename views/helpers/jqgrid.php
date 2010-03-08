@@ -36,6 +36,8 @@ class JqgridHelper extends AppHelper {
 		$this->filterMode = $options['filterMode'];
 		$this->exportOptions = $options['exportOptions'];
 
+		Cache::write('export_options_form_download_' . $id, json_encode($this->exportOptions));
+
 		if ($options['class'] !== false) {
 			$tableClass = 'class=\''. $options['class'] . '\'';
 		}
@@ -197,7 +199,6 @@ EOF;
 
 		if (!empty($this->exportOptions)) {
 
-			$jsonExportOptions = json_encode($this->exportOptions);
 			$code .=<<<EOF
 grid.navButtonAdd('#$pager',{
 	caption: '',
@@ -209,7 +210,7 @@ grid.navButtonAdd('#$pager',{
 		var param = [];
 		var form = $('#form_download_{$id}');
 
-		post.exportOptions = encodeURIComponent('{$jsonExportOptions}');
+		post.gridId = 'form_download_{$id}';
 
 		var inputs = '';
 		for (p in post) { 

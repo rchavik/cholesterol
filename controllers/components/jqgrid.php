@@ -42,7 +42,7 @@ class JqgridComponent extends Object {
 
 	/** construct $conditions array when using Filter Toolbar feature */
 	function _mergeFilterConditions(&$conditions, $needFields, $filterMode) {
-		$ignoreList = array('ext', 'url', '_search', 'nd', 'page', 'rows', 'sidx', 'sord', 'exportOptions', 'filterMode', 'filters');
+		$ignoreList = array('ext', 'url', '_search', 'nd', 'page', 'rows', 'sidx', 'sord', 'exportOptions', 'filterMode', 'filters', 'gridId',);
 
 		$url = $this->controller->params['url'];
 		foreach ($url as $key => $val) {
@@ -192,13 +192,12 @@ class JqgridComponent extends Object {
 		$sord = array_key_value('sord', $url);
 		$_search = (boolean) array_key_value('_search', $url);
 		$filterMode = array_key_value('filterMode', $url);
-		$exportOptions = urldecode(array_key_value('exportOptions', $url));
-		$exportOptions = $exportOptions == '' ? null : json_decode($exportOptions, true);
+		$gridId = urldecode(array_key_value('gridId', $url));
 		$filters = urldecode(array_key_value('filters', $url));
 		$filters = $filters == '' ? null : json_decode($filters);
 
 		return compact('page', 'rows', 'sidx', 'sord', '_search', 
-			'filters', 'filterMode', 'exportOptions'
+			'filters', 'filterMode', 'gridId'
 		);
 	}
 
@@ -221,6 +220,8 @@ class JqgridComponent extends Object {
 
 		extract($options);
 		extract($this->_extractGetParams($this->controller->params['url']));
+
+		$exportOptions = json_decode(Cache::read('export_options_' . $gridId), true);
 
 		$limit = $rows == 0 ? 10 : $rows;
 		$field_order = isset($order) ? $order : $this->_getFieldOrder($sidx, $sord);
