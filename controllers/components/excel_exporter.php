@@ -122,13 +122,13 @@ class ExcelExporterComponent extends Object {
 				$fieldName = $split[1];
 
 				if (!isset($data[$i][$fieldModel][$fieldName])) {
-					continue;
+					$fieldType = 'string';
+					$fieldValue = '';
+				} else {
+					$cell = chr($col) . $row;
+					$fieldType = $this->_getColumnType($Model, $fieldModel, $fieldName);
+					$fieldValue = $data[$i][$fieldModel][$fieldName];
 				}
-
-				$cell = chr($col) . $row;
-
-				$fieldType = $this->_getColumnType($Model, $fieldModel, $fieldName);
-				$fieldValue = $data[$i][$fieldModel][$fieldName];
 				$this->_setCellValue($sheet, $cell, $fieldType, $fieldValue, $options);
 
 				$col ++;
