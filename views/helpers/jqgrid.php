@@ -48,7 +48,7 @@ class JqgridHelper extends AppHelper {
 			$this->modelName = Inflector::classify($id);
 		}
 
-		if (isset($this->exportOptions->type)) {
+		if (isset($this->exportOptions['type'])) {
 			$options['pager'] = true;
 			if (!isset($this->exportOptions['filename'])) {
 				$this->exportOptions['filename'] = Inflector::underscore($this->modelName) . '.' . $this->exportOptions['type'];
@@ -199,10 +199,17 @@ EOF;
 
 		if (!empty($this->exportOptions)) {
 
+			switch ($this->exportOptions['type']) {
+			case 'xls':
+				$buttonTitle = 'Export to XLS'; break;
+			default:
+				$buttonTitle = 'Export to CSV'; break;
+			}
+
 			$code .=<<<EOF
 grid.navButtonAdd('#$pager',{
 	caption: '',
-	title: 'Export to CSV',
+	title: '$buttonTitle',
 	buttonicon: 'ui-icon-disk',
 	onClickButton: function() {
 		var url = grid.getGridParam('url')
