@@ -84,6 +84,7 @@ class ExcelExporterComponent extends Object {
 			'fields' => array(),
 			'format' => array(
 				'date' => 'd/m/Y',
+				'float' => '%.2f',
 				)
 			), $options
 		);
@@ -155,13 +156,28 @@ class ExcelExporterComponent extends Object {
 	/** Set cell value and format according to field type */
 	function _setCellValue($sheet, $cell, $fieldType, $fieldValue, $options) {
 		switch ($fieldType) {
+
+		case 'timestamp':
 		case 'date':
 			$value = $this->Time->format($options['format']['date'], $fieldValue);
-			$sheet->getStyle($cell)->getNumberFormat()->setFormatCode(
-				PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY
-				);
+			$value = $value == '0000-00-00 00:00:00' ? '' : $value;
+
+			if (strlen($value) == 19 && !preg_match('/00:00:00$/', $value)) {
+				$format = 'dd/mm/yy hh:mm:ss';
+			} else {
+				$format = PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY;
+			}
+			$sheet->getStyle($cell)->getNumberFormat()->setFormatCode($format);
 			$sheet->setCellValue($cell, $value);
 			break;
+
+		case 'float':
+			$sheet->getStyle($cell)->getNumberFormat()->setFormatCode(
+				PHPExcel_Style_NumberFormat::FORMAT_NUMBER_00
+				);
+			$sheet->setCellValue($cell, sprintf($options['format']['float'], $fieldValue));
+			break;
+
 		default:
 			$sheet->setCellValue($cell, $fieldValue);
 		}
