@@ -225,6 +225,7 @@ grid.navButtonAdd('#$pager',{
 			inputs += '<input name="' + p + '" value="' + post[p] + '">';
 			param.push(item) 
 		}
+		inputs += '<input name="doExport" value="true" />';
 		form.html(inputs);
 
 		delete post.exportOptions;

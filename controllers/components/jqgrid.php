@@ -42,7 +42,7 @@ class JqgridComponent extends Object {
 
 	/** construct $conditions array when using Filter Toolbar feature */
 	function _mergeFilterConditions(&$conditions, $needFields, $filterMode) {
-		$ignoreList = array('ext', 'url', '_search', 'nd', 'page', 'rows', 'sidx', 'sord', 'exportOptions', 'filterMode', 'filters', 'gridId',);
+		$ignoreList = array('ext', 'url', '_search', 'nd', 'page', 'rows', 'sidx', 'sord', 'doExport', 'exportOptions', 'filterMode', 'filters', 'gridId',);
 
 		$url = $this->controller->params['url'];
 		foreach ($url as $key => $val) {
@@ -191,13 +191,14 @@ class JqgridComponent extends Object {
 		$sidx = array_key_value('sidx', $url);
 		$sord = array_key_value('sord', $url);
 		$_search = (boolean) array_key_value('_search', $url);
+		$doExport = (boolean) array_key_value('doExport', $url);
 		$filterMode = array_key_value('filterMode', $url);
 		$gridId = urldecode(array_key_value('gridId', $url));
 		$filters = urldecode(array_key_value('filters', $url));
 		$filters = $filters == '' ? null : json_decode($filters);
 
 		return compact('page', 'rows', 'sidx', 'sord', '_search', 
-			'filters', 'filterMode', 'gridId'
+			'filters', 'filterMode', 'gridId', 'doExport'
 		);
 	}
 
@@ -252,7 +253,7 @@ class JqgridComponent extends Object {
 		unset ($countOptions['fields']);
 		$count = $model->find('count', $countOptions);
 
-		if ($exportOptions) {
+		if ($doExport && $exportOptions) {
 			if (in_array(strtolower($exportOptions['type']), array('xls','csv'))) {
 				$page = 1;
 				$limit = 65535;
@@ -271,7 +272,7 @@ class JqgridComponent extends Object {
 
 		$rows = $model->find('all', $findOptions);
 
-		if (!empty($exportOptions)) {
+		if ($doExport) {
 			return $this->_exportToFile($modelName, $fields, $rows, $exportOptions);
 		}
 
