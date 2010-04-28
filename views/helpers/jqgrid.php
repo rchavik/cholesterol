@@ -105,6 +105,11 @@ EOF;
 	 */
 	function script($id, $gridOptions = array(), $navGridOptions = array()) {
 
+		// set defaults for rowList first
+		if (!isset($gridOptions['rowList'])) {
+			$gridOptions['rowList'] = array(5, 10);
+		}
+
 		$gridOptions = Set::merge(array(
 			'caption' => null,
 			'datatype' => 'json',
@@ -115,7 +120,6 @@ EOF;
 			'colNames' => array(),
 			'colModel' => array(),
 			'rowNum' => 5,
-			'rowList' => array(5, 10),
 			'viewrecords' => true,
 			'width' => '100%',
 			'jsonReader' => array(
