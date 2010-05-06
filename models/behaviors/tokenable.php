@@ -1,6 +1,17 @@
 <?php
 // vim: set ts=4 sts=4 sw=4 si noet:
 
+/** Creates a unique token for any row.
+ *
+ *  Requires a field called 'token' to be available in the parent Model (or
+ *  customize it via 'tokenField' setting.
+ *
+ *  Other implementations for a similar functionality:
+ *  http://teknoid.wordpress.com/2009/09/19/build-a-url-shortener-for-your-app/
+ *
+ *  It always seems to boil down to choosing the right keywords, doesn't it?
+ *  - TehTreag
+ */
 class TokenableBehavior extends ModelBehavior {
 
 	var $__settings = array();
