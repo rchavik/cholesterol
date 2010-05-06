@@ -68,13 +68,13 @@ class TokenableBehavior extends ModelBehavior {
 	}
 
 	function __isValidToken($token) {
-		$tokens = $this->Token->find('first', array(
+		$count = $this->Token->find('count', array(
 			'conditions' => array(
 				'Token.token' => $token,
 				),
 			)
 		);
-		return empty($tokens);
+		return 0 == $count;
 	}
 
 	function __uniqid($len) {
