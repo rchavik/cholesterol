@@ -21,23 +21,6 @@ class TokenableBehavior extends ModelBehavior {
 	}
 
 
-	/** Enable Tokenable Behavior
-	 */
-	function enableTokenable(&$model, $enable = null) {
-		if ($enable !== null) {
-			$this->settings[$model->alias]['enabled'] = $enable;
-		}
-		return $this->settings[$model->alias]['enabled'];
-	}
-	
-	/** Disable Behavior
-	 *  In a controller, call this model's method to disable Tokenable behavior
-	 *  eg: $Account->disableTokenable()
-	 */
-	function disableTokenable(&$model) {
-		return $this->enableTokenable($model, false);
-	}
-
 	function beforeSave(&$Model) {
 		if (!$this->__settings[$Model->alias]['enabled']) {
 			return false;
