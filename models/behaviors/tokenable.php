@@ -52,7 +52,7 @@ class TokenableBehavior extends ModelBehavior {
 
 		for ($i = 0; $i < 10; $i++) {
 			$token = $this->__uniqid($len);
-			if ($this->__isValidToken($Model, $token)) {
+			if ($this->__isValidToken($token)) {
 				$Model->data[$Model->alias][$tokenField] = $token;
 				return true;
 			}
