@@ -37,11 +37,11 @@ class TokenableBehavior extends ModelBehavior {
 			return false;
 		}
 
-		if ($Model->id) {
+		$tokenField = $this->__settings[$Model->alias]['tokenField'];
+		if ($Model->id && $Model->data[$Model->alias][$tokenField] != 'default') {
 			return true;
 		}
 
-		$tokenField = $this->__settings[$Model->alias]['tokenField'];
 		if (!$Model->hasField($this->__settings[$Model->alias]['tokenField'])) {
 			trigger_error('Missing column: `' . $tokenField . '` in Model ' .  $Model->alias,  E_USER_ERROR );
 			return false;
