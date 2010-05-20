@@ -38,7 +38,7 @@ class TokenableBehavior extends ModelBehavior {
 		}
 
 		$tokenField = $this->__settings[$Model->alias]['tokenField'];
-		if ($Model->id && $Model->data[$Model->alias][$tokenField] != 'default') {
+		if ($Model->id && isset($Model->data[$Model->alias][$tokenField]) && $Model->data[$Model->alias][$tokenField] != 'default') {
 			return true;
 		}
 
