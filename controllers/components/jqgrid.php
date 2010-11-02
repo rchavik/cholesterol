@@ -61,8 +61,18 @@ class JqgridComponent extends Object {
 			case 'exact': 
 				$conditions[$newkey] = $val; 
 				break;
+
 			default:
-				$conditions[$newkey . ' like'] = '%' . $val . '%';
+				if (strpos($val, ' - ')) {
+					$date = explode(' - ', $val);
+					if (count($date) == 2) {
+						$conditions[$newkey . ' BETWEEN ? AND ?'] = array($date[0], $date[1]);
+					} else {
+						$conditions[$newkey . ' like'] = '%' . $val . '%';
+					}
+				} else {
+					$conditions[$newkey . ' like'] = '%' . $val . '%';
+				}
 				break;
 			}
 		}
