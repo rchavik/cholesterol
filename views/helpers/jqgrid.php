@@ -21,7 +21,7 @@ class JqgridHelper extends AppHelper {
 
 	/** Generate container for jqGrid */
 	function grid($id, $options = array()) {
-		$options = array_merge(array(
+		$options = Set::merge(array(
 			'modelName' => false,
 			'class' => false,
 			'pager' => false,
@@ -49,7 +49,9 @@ class JqgridHelper extends AppHelper {
 		}
 
 		if (isset($this->exportOptions['type'])) {
-			$options['pager'] = true;
+			if ($options['pager'] === false) {
+				$options['pager'] = true;
+			}
 			if (!isset($this->exportOptions['filename'])) {
 				$this->exportOptions['filename'] = Inflector::underscore($this->modelName) . '.' . $this->exportOptions['type'];
 			}
