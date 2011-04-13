@@ -178,7 +178,10 @@ class ExcelExporterComponent extends Object {
 			break;
 
 		default:
-			$sheet->setCellValue($cell, $fieldValue);
+			if(is_numeric($fieldValue) && $fieldValue[0]=='0')
+				$sheet->setCellValueExplicit($cell, $fieldValue, PHPExcel_Cell_DataType::TYPE_STRING);
+			else
+				$sheet->setCellValue($cell, $fieldValue);
 		}
 	}
 
