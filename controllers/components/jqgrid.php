@@ -230,7 +230,11 @@ class JqgridComponent extends Object {
 			), $options);
 
 		extract($options);
-		extract($this->_extractGetParams($this->controller->params['url']));
+		if ($this->controller->RequestHandler->isPost()) {
+			extract($this->_extractGetParams($this->controller->params['form']));
+		} else {
+			extract($this->_extractGetParams($this->controller->params['url']));
+		}
 
 		$exportOptions = json_decode(Cache::read('export_options_' . $gridId), true);
 
