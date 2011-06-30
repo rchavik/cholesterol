@@ -291,7 +291,12 @@ class JqgridComponent extends Object {
 		$rows = $model->find('all', $findOptions);
 
 		if ($doExport) {
-			return $this->_exportToFile($modelName, $fields, $rows, $exportOptions);
+			if (!empty($rows[0])) {
+				$exportFields = array_keys(Set::flatten($rows[0]));
+			} else {
+				$exportFields = $fields;
+			}
+			return $this->_exportToFile($modelName, $exportFields, $rows, $exportOptions);
 		}
 
 		$total_pages = $count > 0 ? ceil($count/$limit) : 0;
