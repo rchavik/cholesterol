@@ -299,32 +299,17 @@ class JqgridComponent extends Object {
 			'total' => $total_pages
 			);
 
-		$response += $this->_constructResponse($rows, $needFields);
+		$response += $this->_constructResponse($rows);
 
 		$this->controller->set(compact('response'));
 		$this->controller->set('json', 'response');
 	}
 
-	function _constructResponse($rows, $fields) {
+	function _constructResponse($rows) {
 		$response = array();
 		for ($i = 0, $row_count = count($rows); $i < $row_count; $i++) {
 			$row =& $rows[$i];
-			foreach ($fields as $gridModel => $gridFields) {
-
-				for ($j = 0; $j < count($gridFields); $j++) {
-					$gridField = $gridFields[$j];
-					// XXX: assume that an 'id' field exist
-					if ($gridField == 'id') {
-						$response['rows'][$i]['id'] = $row[$gridModel][$gridField];
-					}
-					if (array_key_exists($gridModel, $row) &&
-					    array_key_exists($gridField, $row[$gridModel])) {
-
-						$fieldName = $gridModel . '.' . $gridField;
-						$response['rows'][$i][$fieldName] = $row[$gridModel][$gridField];
-					}
-				}
-			}
+			$response['rows'][$i] = Set::flatten($row);
 		}
 		return $response;
 	}
