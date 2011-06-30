@@ -148,7 +148,11 @@ class JqgridComponent extends Object {
 			$row = $rows[$i];
 			for ($j = 0; $j < $fieldLen; $j++) {
 				$dict =& $fieldList[$j];
-				echo $row[$dict[0]][$dict[1]] . ',';
+				if (isset($row[$dict[0]][$dict[1]])) {
+					echo $row[$dict[0]][$dict[1]] . ',';
+				} else {
+					echo ',';
+				}
 			}
 			echo "\r\n";
 		}
