@@ -48,10 +48,10 @@ class ExcelExporterComponent extends Object {
 
 		}
 
-		$col = ord('A');
+		$col = 0;
 		for ($i = 0, $ii = count($columnHeaders); $i < $ii; $i++) {
 			$header = $columnHeaders[$i];
-			$cell = chr($col) . '1';
+			$cell = PHPExcel_Cell::stringFromColumnIndex($col) . '1';
 			$sheet->setCellValue ($cell, $header);
 			$col++;
 		}
@@ -114,14 +114,14 @@ class ExcelExporterComponent extends Object {
 		$Model = ClassRegistry::init($modelName);
 
 		for ($i = 0, $ii = count($data); $i < $ii; $i++) {
-			$col = ord('A');
+			$col = 0;
 			$row = $i + $startRow;
 			for ($c = 0, $cc = count($options['fields']); $c < $cc; $c++) {
 				$currentField = $options['fields'][$c];
 				$split = explode('.', $currentField, 2);
 				$fieldModel = $split[0];
 				$fieldName = $split[1];
-				$cell = chr($col) . $row;
+				$cell = PHPExcel_Cell::stringFromColumnIndex($col) . $row;
 				if (!isset($data[$i][$fieldModel][$fieldName])) {
 					$fieldType = 'string';
 					$fieldValue = '';
