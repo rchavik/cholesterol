@@ -77,7 +77,7 @@ function(item) {
 
 		$script =<<<EOF
 $(document).ready(function() {
-	$('#{$acFieldId}').autocomplete('$url', 
+	$('#{$acFieldId}').autocomplete('$url',
 		$jsonAcOptions
 )
 	.result(function(e, item) {
