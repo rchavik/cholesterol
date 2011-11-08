@@ -78,7 +78,7 @@ EOF;
 			if ($options['pagerClass'] !== false) {
 				$pagerhtml = '<div id=\'' . $pager . '\'></div>';
 			} else {
-				$pagerhtml = '<div id=\'' . $pager . '\' class=\'' . 
+				$pagerhtml = '<div id=\'' . $pager . '\' class=\'' .
 					$options['pagerClass'] . '\'></div>';
 			}
 		}
@@ -100,9 +100,9 @@ EOF;
 		}
 	}
 
-	/** Generate javascript block for jqGrid 
+	/** Generate javascript block for jqGrid
 	 *  @param $id string id of html element
-	 *  @param $gridOptions mixed jqgrid's option 
+	 *  @param $gridOptions mixed jqgrid's option
 	 *  @param $navGridOption mixed jqgrid's navigator options
 	 */
 	function script($id, $gridOptions = array(), $navGridOptions = array()) {
@@ -173,7 +173,7 @@ EOF;
 
 		if (!empty($pager)) {
 			$code .=<<<EOF
-var grid = $('#{$id}').jqGrid($jsonOptions).navGrid('#$pager', $jsonNavGridOptions, 
+var grid = $('#{$id}').jqGrid($jsonOptions).navGrid('#$pager', $jsonNavGridOptions,
 	$jsonPEdit, $jsonPAdd, $jsonPDel, $jsonPSearch, $jsonPView);
 EOF;
 
@@ -226,10 +226,10 @@ grid.navButtonAdd('#$pager',{
 		post.gridId = 'form_download_{$id}';
 
 		var inputs = '';
-		for (p in post) { 
-			var item = p + '=' + post[p]; 
+		for (p in post) {
+			var item = p + '=' + post[p];
 			inputs += '<input name="' + p + '" value="' + post[p] + '">';
-			param.push(item) 
+			param.push(item)
 		}
 		inputs += '<input name="doExport" value="true" />';
 		form.html(inputs);
@@ -237,7 +237,7 @@ grid.navButtonAdd('#$pager',{
 		delete post.exportOptions;
 
 		form.attr('action', url).submit();
-	}, 
+	},
 	position: 'last'
 });
 EOF;
