@@ -7,7 +7,7 @@
  *  @author Rachman Chavik
  *  @license MIT
  */
-class JqgridComponent extends Object {
+class JqgridComponent extends Component {
 
 	var $controller;
 

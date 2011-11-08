@@ -19,7 +19,7 @@ App::import(array(
 	'file' => 'PHPExcel/IOFactory.php'
 ));
 
-class ExcelExporterComponent extends Object {
+class ExcelExporterComponent extends Component {
 
 	function __construct() {
 		$this->Time = new TimeHelper;
