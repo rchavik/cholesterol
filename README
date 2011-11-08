@@ -30,7 +30,7 @@ class UsersController extends AppController {
 	// Retrieve data for the grid in Json format
 	function get_list_users() {
 		// Perform the actual query using JqgridComponent and prepare
-		// the JSON response for the grid. 
+		// the JSON response for the grid.
 		$this->Jqgrid->find('User');
 	}
 ?>
@@ -39,8 +39,8 @@ class UsersController extends AppController {
 // views/users/list_users.ctp
 echo $jqgrid->grid('user');
 
-// Minimal configuration required to setup jqgrid initialization 
-// The format of $options array follows jqgrid configuration 
+// Minimal configuration required to setup jqgrid initialization
+// The format of $options array follows jqgrid configuration
 // NOTE: javascript blocks (eg: for event handling) needs to be enclosed
 // with <script> and </script>
 // If anyone has better solution for this, please let me know

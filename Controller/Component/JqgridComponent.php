@@ -58,8 +58,8 @@ class JqgridComponent extends Component {
 			}
 
 			switch ($filterMode) {
-			case 'exact': 
-				$conditions[$newkey] = $val; 
+			case 'exact':
+				$conditions[$newkey] = $val;
 				break;
 
 			default:
@@ -91,7 +91,7 @@ class JqgridComponent extends Component {
 			switch ($rule->op) {
 			case 'bn':
 			case 'bw':
-				$data = $data . '%'; 
+				$data = $data . '%';
 				break;
 			case 'ew':
 			case 'en':
@@ -211,7 +211,7 @@ class JqgridComponent extends Component {
 		$filters = urldecode(array_key_value('filters', $url));
 		$filters = $filters == '' ? null : json_decode($filters);
 
-		return compact('page', 'rows', 'sidx', 'sord', '_search', 
+		return compact('page', 'rows', 'sidx', 'sord', '_search',
 			'filters', 'filterMode', 'gridId', 'doExport'
 		);
 	}
