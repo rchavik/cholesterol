@@ -1,6 +1,8 @@
 <?php
 // vim: set ts=4 sts=4 sw=4 si noet:
 
+App::import('Vendor', 'Cholesterol.utils');
+
 /** Component to assist querying and generating JSON result set when working
  *  with jqGrid
  *
@@ -44,8 +46,12 @@ class JqgridComponent extends Component {
 	function _mergeFilterConditions(&$conditions, $needFields, $filterMode) {
 		$ignoreList = array('ext', 'url', '_search', 'nd', 'page', 'rows', 'sidx', 'sord', 'doExport', 'exportOptions', 'filterMode', 'filters', 'gridId',);
 
-		$url = $this->controller->params['url'];
+		$url = $this->controller->request->query;
+		$i = 0;
 		foreach ($url as $key => $val) {
+			if ($i == 0) {
+				$i++; continue;
+			}
 			if (in_array($key, $ignoreList))  {
 				continue;
 			}
@@ -199,7 +205,6 @@ class JqgridComponent extends Component {
 	}
 
 	function _extractGetParams($url) {
-		App::import('Vendor', 'Cholesterol.utils');
 		$page = array_key_value('page', $url);
 		$rows = array_key_value('rows', $url);
 		$sidx = array_key_value('sidx', $url);
@@ -234,10 +239,12 @@ class JqgridComponent extends Component {
 			), $options);
 
 		extract($options);
-		if ($this->controller->RequestHandler->isPost()) {
-			extract($this->_extractGetParams($this->controller->params['form']));
+		if ($this->controller->request->isPost()) {
+			extract($this->_extractGetParams($this->controller->request->params['form']));
 		} else {
-			extract($this->_extractGetParams($this->controller->params['url']));
+			$f = $this->_extractGetParams($this->controller->request->query);
+			extract($f
+			);
 		}
 
 		$exportOptions = json_decode(Cache::read('export_options_' . $gridId), true);
@@ -252,7 +259,7 @@ class JqgridComponent extends Component {
 			$needFields = $this->_extractFields($fields);
 		} else {
 			// fallback using model schema fields
-			$needFields = array($modelName => array_keys($model->_schema));
+			$needFields = array($modelName => array_keys($model->schema()));
 
 			for ($i = 0, $ii = count($needFields[$modelName]); $i < $ii; $i++) {
 				$fields[] = $modelName . '.' . $needFields[$modelName][$i];
@@ -278,7 +285,7 @@ class JqgridComponent extends Component {
 			}
 			$this->controller->autoRender = false;
 		} else {
-			$this->controller->view = 'Cholesterol.Json';
+			$this->controller->viewClass = 'Cholesterol.Json';
 		}
 
 		$findOptions = $options + array(

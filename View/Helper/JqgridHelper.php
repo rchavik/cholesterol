@@ -1,15 +1,13 @@
 <?php
 // vim: set ft=php ts=4 sts=4 sw=4 si noet:
 
-App::import('Vendor', 'Cholesterol.Utils');
-
 /** A very simple helper to generate html tags for use with jqGrid
  *  @author Rachman Chavik
  *  @license MIT
  */
 class JqgridHelper extends AppHelper {
 
-	var $helpers = array('Javascript');
+	var $helpers = array('Html');
 
 	var $modelName;
 
@@ -91,7 +89,7 @@ EOF;
 
 		$colModel =& $gridOptions['colModel'];
 
-		foreach ($model->_schema as $fieldName => $fieldInfo) {
+		foreach ($model->schema() as $fieldName => $fieldInfo) {
 			$colModel[] = array(
 				'index' => $this->modelName . '.' . $fieldName,
 				'name' => $this->modelName . '.' . $fieldName,
@@ -255,7 +253,7 @@ $(document).ready(function() {
 });
 EOF;
 
-		return $this->Javascript->codeBlock($script);
+		return $this->Html->scriptBlock($script);
 	}
 
 }

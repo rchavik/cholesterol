@@ -3,7 +3,7 @@
 
 class AutocompleteHelper extends AppHelper {
 
-	var $helpers = array('Form', 'Javascript');
+	var $helpers = array('Form', 'Js');
 
 	// swiped from Form::label()
 	function _getLabel($fieldName) {
@@ -85,7 +85,7 @@ $(document).ready(function() {
 	});
 });
 EOF;
-		$this->Javascript->codeBlock($script, array('inline' => false));
+		$this->Js->codeBlock($script, array('inline' => false));
 		return $out;
 	}
 }
