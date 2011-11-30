@@ -21,9 +21,13 @@ App::import(array(
 
 class ExcelExporterComponent extends Component {
 
-	function __construct() {
-		$this->Time = new TimeHelper;
-		parent::__construct();
+	function initialize($controller) {
+		if ($controller->View == null) {
+			$view = new View($controller);
+		} else {
+			$view = $controller->View;
+		}
+		$this->Time = new TimeHelper($view);
 	}
 
 	function _writeHeaders(&$xls, $options) {
