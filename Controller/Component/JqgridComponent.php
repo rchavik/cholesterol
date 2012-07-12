@@ -285,7 +285,7 @@ class JqgridComponent extends Component {
 			}
 			$this->controller->autoRender = false;
 		} else {
-			$this->controller->viewClass = 'Cholesterol.Json';
+			$this->controller->viewClass = 'Json';
 		}
 
 		$findOptions = $options + array(
@@ -318,7 +318,7 @@ class JqgridComponent extends Component {
 		$response += $this->_constructResponse($rows);
 
 		$this->controller->set(compact('response'));
-		$this->controller->set('json', 'response');
+		$this->controller->set('_serialize', 'response');
 	}
 
 	function _constructResponse($rows) {
