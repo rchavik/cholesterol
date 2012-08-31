@@ -11,7 +11,7 @@ App::import('Vendor', 'Cholesterol.utils');
  */
 class JqgridComponent extends Component {
 
-	var $controller;
+	public $controller;
 
 	static $mapOpers = array(
 			'eq' => '',
@@ -30,11 +30,15 @@ class JqgridComponent extends Component {
 			'nc' => ' NOT LIKE'
 			);
 
-	function initialize(&$controller, $settings = array()) {
+	public function __construct(ComponentCollection $collection, $settings = array()) {
+		parent::__construct($collection, $settings);
+	}
+	
+	public function initialize(Controller $controller) {
 		$this->controller = $controller;
 	}
 
-	function _extractFields($fields) {
+	protected function _extractFields($fields) {
 		for ($i = 0; $i < count($fields); $i++) {
 			$arr = explode('.', $fields[$i]);
 			$res[$arr[0]][] = $arr[1];
@@ -43,7 +47,7 @@ class JqgridComponent extends Component {
 	}
 
 	/** construct $conditions array when using Filter Toolbar feature */
-	function _mergeFilterConditions(&$conditions, $needFields, $filterMode) {
+	protected function _mergeFilterConditions(&$conditions, $needFields, $filterMode) {
 		$ignoreList = array('ext', 'url', '_search', 'nd', 'page', 'rows', 'sidx', 'sord', 'doExport', 'exportOptions', 'filterMode', 'filters', 'gridId',);
 
 		$url = $this->controller->request->query;
@@ -85,7 +89,7 @@ class JqgridComponent extends Component {
 	}
 
 	/** construct $conditions array when using Advanced Search feature */
-	function _mergeAdvSearchConditions(&$conditions, $needFields, $filters) {
+	protected function _mergeAdvSearchConditions(&$conditions, $needFields, $filters) {
 
 		$rules = array();
 
@@ -128,7 +132,7 @@ class JqgridComponent extends Component {
 	}
 
 	/** Export grid data to CSV */
-	function _exportToCSV($modelName, $fields, $rows, $exportOptions) {
+	protected function _exportToCSV($modelName, $fields, $rows, $exportOptions) {
 		$download_filename = $exportOptions['filename'];
 		header('Content-Type: application/vnd.ms-excel');
 		header('Content-Disposition: attachment; filename='. urlencode($download_filename));
@@ -165,7 +169,7 @@ class JqgridComponent extends Component {
 		Configure::write('debug', 0);
 	}
 
-	function _exportToXls($modelName, $fields, $rows, $exportOptions) {
+	protected function _exportToXls($modelName, $fields, $rows, $exportOptions) {
 		if (!property_exists($this->controller, 'ExcelExporter')) {
 			$this->log('Jqgrid requires ExcelExporter component');
 		}
@@ -190,7 +194,7 @@ class JqgridComponent extends Component {
 		unlink($tempfile);
 	}
 
-	function _exportToFile($modelName, $fields, $rows, $exportOptions) {
+	protected function _exportToFile($modelName, $fields, $rows, $exportOptions) {
 		switch ($exportOptions['type']) {
 		case 'csv':
 			return $this->_exportToCSV($modelName, $fields, $rows, $exportOptions);
@@ -204,7 +208,7 @@ class JqgridComponent extends Component {
 		}
 	}
 
-	function _extractGetParams($url) {
+	protected function _extractGetParams($url) {
 		$page = array_key_value('page', $url);
 		$rows = array_key_value('rows', $url);
 		$sidx = array_key_value('sidx', $url);
@@ -221,7 +225,7 @@ class JqgridComponent extends Component {
 		);
 	}
 
-	function _getFieldOrder($sidx, $sord) {
+	protected function _getFieldOrder($sidx, $sord) {
 		if (!empty($sidx)) {
 			$field_order = $sidx . ' ' . $sord;
 		} else {
@@ -230,7 +234,7 @@ class JqgridComponent extends Component {
 		return $field_order;
 	}
 
-	function find($modelName, $options = array()) {
+	public function find($modelName, $options = array()) {
 
 		$options += Set::merge(array(
 			'conditions' => array(),
@@ -321,7 +325,7 @@ class JqgridComponent extends Component {
 		$this->controller->set('_serialize', 'response');
 	}
 
-	function _constructResponse($rows) {
+	protected function _constructResponse($rows) {
 		$response = array();
 		for ($i = 0, $row_count = count($rows); $i < $row_count; $i++) {
 			$row =& $rows[$i];
