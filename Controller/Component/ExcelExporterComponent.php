@@ -2,21 +2,17 @@
 // vim: set ts=4 sts=4 sw=4 si noet:
 
 $include_path = get_include_path();
-$newpath = ($include_path . PATH_SEPARATOR . APP . 'vendors' . DS . 'phpexcel');
+$newpath = ($include_path . PATH_SEPARATOR . APP . 'Vendor' . DS . 'phpexcel');
 set_include_path($newpath);
 
-App::import('Core', 'Helper');
-App::import('Helper', 'Time');
+App::uses('Helper', 'View/Helper');
+App::uses('TimeHelper', 'View/Helper');
 
-App::import(array(
-	'type' => 'Vendor',
-	'name' => 'PHPExcel',
-	'file' => 'PHPExcel.php'
+App::import('Vendor', 'PHPExcel', array(
+	'file' => 'phpexcel/PHPExcel.php'
 ));
-App::import(array(
-	'type' => 'Vendor',
-	'name' => 'PHPExcel_IOFactory',
-	'file' => 'PHPExcel/IOFactory.php'
+App::import('Vendor', 'PHPExcel_IOFactory', array(
+	'file' => 'phpexcel/PHPExcel/IOFactory.php'
 ));
 
 class ExcelExporterComponent extends Component {
