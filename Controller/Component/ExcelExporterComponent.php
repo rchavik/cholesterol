@@ -5,9 +5,6 @@ $include_path = get_include_path();
 $newpath = ($include_path . PATH_SEPARATOR . APP . 'Vendor' . DS . 'phpexcel');
 set_include_path($newpath);
 
-App::uses('Helper', 'View/Helper');
-App::uses('TimeHelper', 'View/Helper');
-
 App::import('Vendor', 'PHPExcel', array(
 	'file' => 'phpexcel/PHPExcel.php'
 ));
@@ -15,15 +12,13 @@ App::import('Vendor', 'PHPExcel_IOFactory', array(
 	'file' => 'phpexcel/PHPExcel/IOFactory.php'
 ));
 
+App::uses('CakeTime', 'Utility');
+
 class ExcelExporterComponent extends Component {
 
-	function initialize($controller) {
-		if ($controller->View == null) {
-			$view = new View($controller);
-		} else {
-			$view = $controller->View;
-		}
-		$this->Time = new TimeHelper($view);
+	public function initialize(Controller $controller) {
+		$this->controller = $controller;
+		$this->Time = new CakeTime();
 	}
 
 	function _writeHeaders(&$xls, $options) {
