@@ -14,45 +14,45 @@
  */
 class TokenableBehavior extends ModelBehavior {
 
-	var $__settings = array();
+	protected $_settings = array();
 
-	function setup(&$Model, $settings = array()) {
+	public function setup(Model $Model, $settings = array()) {
 
-		if (!isset($this->__settings[$Model->alias])) {
-			$this->__settings[$Model->alias] = array(
+		if (!isset($this->_settings[$Model->alias])) {
+			$this->_settings[$Model->alias] = array(
 				'enabled' => true,
 				'foreignKey' => 'id',
 				'tokenField' => 'token',
 				'tokenLength' => 5,
 				'maxIterations' => 10,
-				);
+			);
 		}
 
-		$this->__settings[$Model->alias] = Set::merge($this->__settings[$Model->alias], $settings);
+		$this->_settings[$Model->alias] = Set::merge($this->_settings[$Model->alias], $settings);
 	}
 
 
-	function beforeSave(&$Model) {
-		if (!$this->__settings[$Model->alias]['enabled']) {
+	public function beforeSave(Model $Model) {
+		if (!$this->_settings[$Model->alias]['enabled']) {
 			return false;
 		}
 
-		$tokenField = $this->__settings[$Model->alias]['tokenField'];
+		$tokenField = $this->_settings[$Model->alias]['tokenField'];
 		if ($Model->id && isset($Model->data[$Model->alias][$tokenField]) && $Model->data[$Model->alias][$tokenField] != 'default') {
 			return true;
 		}
 
-		if (!$Model->hasField($this->__settings[$Model->alias]['tokenField'])) {
+		if (!$Model->hasField($this->_settings[$Model->alias]['tokenField'])) {
 			trigger_error('Missing column: `' . $tokenField . '` in Model ' .  $Model->alias,  E_USER_ERROR );
 			return false;
 		}
 
 		$this->Token =& ClassRegistry::init('Cholesterol.Token');
-		$len = $this->__settings[$Model->alias]['tokenLength'];
+		$len = $this->_settings[$Model->alias]['tokenLength'];
 
 		for ($i = 0; $i < 10; $i++) {
-			$token = $this->__uniqid($len);
-			if ($this->__isValidToken($token)) {
+			$token = $this->_uniqid($len);
+			if ($this->_isValidToken($token)) {
 				$Model->data[$Model->alias][$tokenField] = $token;
 				return true;
 			}
@@ -61,15 +61,15 @@ class TokenableBehavior extends ModelBehavior {
 		return false;
 	}
 
-	function afterSave(&$Model, $created) {
-		$tokenField = $this->__settings[$Model->alias]['tokenField'];
+	public function afterSave(Model $Model, $created) {
+		$tokenField = $this->_settings[$Model->alias]['tokenField'];
 		if ($created) {
-			return $this->__saveToken($Model, $Model->data[$Model->alias][$tokenField]);
+			return $this->_saveToken($Model, $Model->data[$Model->alias][$tokenField]);
 		}
 		return true;
 	}
 
-	function __saveToken(&$Model, $token) {
+	protected function _saveToken(&$Model, $token) {
 		$token = $this->Token->create(array(
 			'model' => $Model->alias,
 			'foreign_key' =>  $Model->id,
@@ -78,7 +78,7 @@ class TokenableBehavior extends ModelBehavior {
 		return $this->Token->save($token);
 	}
 
-	function __isValidToken($token) {
+	protected function _isValidToken($token) {
 		$count = $this->Token->find('count', array(
 			'conditions' => array(
 				'Token.token' => $token,
@@ -88,7 +88,7 @@ class TokenableBehavior extends ModelBehavior {
 		return 0 == $count;
 	}
 
-	function __uniqid($len) {
+	function _uniqid($len) {
 		return substr(uniqid(), -$len);
 	}
 }

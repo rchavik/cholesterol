@@ -334,5 +334,3 @@ class JqgridComponent extends Component {
 		return $response;
 	}
 }
-
-?>

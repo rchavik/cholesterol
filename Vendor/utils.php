@@ -16,5 +16,3 @@ function _json_encode($array) {
 	$buffer = str_replace('<\/script>"', '', $buffer);
 	return $buffer;
 }
-
-?>
