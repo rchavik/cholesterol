@@ -52,12 +52,12 @@ class ExcelExporterComponent extends Component {
 		}
 	}
 
-	/** Export $data into an Excel file
-	 *
-	 *  @param $data mixed data retrieved via Model->find operation
-	 *  @param $options mixed array of options
-	 *
-	 */
+/** Export $data into an Excel file
+ *
+ *  @param $data mixed data retrieved via Model->find operation
+ *  @param $options mixed array of options
+ *
+ */
 	public function export($modelName, $data, $options = array()) {
 		$needHeader = true;
 		$startRow = 2;
@@ -104,16 +104,19 @@ class ExcelExporterComponent extends Component {
 			$this->_writeHeaders($xls, $options);
 		}
 
-		$Model = ClassRegistry::init($modelName);
+		list($pluginName, $pluginModel) = pluginSplit($modelName);
+		$Model = ClassRegistry::init($pluginModel);
 
 		for ($i = 0, $ii = count($data); $i < $ii; $i++) {
 			$col = 0;
 			$row = $i + $startRow;
 			for ($c = 0, $cc = count($options['fields']); $c < $cc; $c++) {
 				$currentField = $options['fields'][$c];
-				$split = explode('.', $currentField, 2);
-				$fieldModel = $split[0];
-				$fieldName = $split[1];
+				if (strpos($currentField, '.') !== false) {
+					list($fieldModel, $fieldName) = pluginSplit($currentField);
+				} else {
+					list($fieldModel, $fieldName) = array($pluginModel, $currentField);
+				}
 				$cell = PHPExcel_Cell::stringFromColumnIndex($col) . $row;
 				if (!isset($data[$i][$fieldModel][$fieldName])) {
 					$fieldType = 'string';
