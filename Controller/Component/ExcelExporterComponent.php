@@ -63,6 +63,10 @@ class ExcelExporterComponent extends Component {
 		$startRow = 2;
 		$startCol = 'A';
 
+		if (empty($this->Time)) {
+			$this->Time = new CakeTime();
+		}
+
 		$options = Hash::merge(array(
 			'template' => array(
 				'file' => null,
